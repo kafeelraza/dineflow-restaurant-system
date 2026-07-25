@@ -52,6 +52,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [assigningMap, setAssigningMap] = useState<Record<string, string>>({});
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [settlingOrderId, setSettlingOrderId] = useState<string | null>(null);
 
   const fetchOrdersData = async () => {
     try {
@@ -195,8 +196,14 @@ export default function OrdersPage() {
     }
   };
 
-  const handleSettleAndArchive = async (orderId: string) => {
-    if (!confirm("Settling payment will complete this order and archive it. Proceed?")) return;
+  const handleSettleAndArchive = (orderId: string) => {
+    setSettlingOrderId(orderId);
+  };
+
+  const confirmSettleAndArchive = async () => {
+    if (!settlingOrderId) return;
+    const orderId = settlingOrderId;
+    setSettlingOrderId(null);
     setUpdatingId(orderId);
 
     try {
@@ -370,6 +377,35 @@ export default function OrdersPage() {
               </div>
             </section>
           ))}
+        </div>
+      )}
+      {settlingOrderId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-[12px] bg-[#fcfaf6] p-6 border border-[#eadfce] shadow-2xl text-center space-y-4 animate-in fade-in zoom-in duration-200">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#f8ddd5] text-[var(--terracotta)]">
+              <AlertCircle size={24} />
+            </div>
+            <h3 className="font-serif text-xl font-bold text-[var(--ink)]">Settle & Archive Order</h3>
+            <p className="text-xs text-[var(--muted)] leading-relaxed font-semibold">
+              Are you sure you want to settle the payment for this order? This will complete the order and move it to your sales history logs.
+            </p>
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setSettlingOrderId(null)}
+                className="h-10 flex-1 rounded-full border border-[#d7c9b5] bg-white text-xs font-bold text-[var(--ink)] hover:bg-[#f5f0e6] transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmSettleAndArchive}
+                className="h-10 flex-1 rounded-full bg-[var(--terracotta)] text-xs font-bold text-white hover:scale-[1.01] transition shadow-sm"
+              >
+                Settle & Archive
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </DashboardShell>
