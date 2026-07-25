@@ -73,6 +73,12 @@ export function MenuExperience() {
               setPreselected(true);
             }
           }
+        } else {
+          // Default selection fallback if no query param is provided
+          if (loadedTables.length > 0) {
+            setSelectedTableId(loadedTables[0].id);
+            setSelectedTableNumber(loadedTables[0].table_number);
+          }
         }
 
         // Fetch Categories
