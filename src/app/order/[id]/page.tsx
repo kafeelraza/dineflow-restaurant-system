@@ -210,7 +210,7 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                 <span>Subtotal</span>
                 <span>{formatRs(order.total_amount)}</span>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {order.restaurant_tables?.table_number && (
                   <Link
                     href={`/menu?table=${order.restaurant_tables.table_number}`}

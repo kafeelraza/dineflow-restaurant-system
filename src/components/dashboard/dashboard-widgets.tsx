@@ -170,11 +170,22 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
                   }
                   return true;
                 })
-                .map((item) => (
-                  <Link key={item.href} href={item.href} className="shrink-0 rounded-full border border-[#d7c9b5] bg-white px-4 py-2 text-xs font-bold">
-                    {item.label}
-                  </Link>
-                ))}
+                .map((item) => {
+                  const active = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition ${
+                        active
+                          ? "bg-[var(--terracotta)] text-white shadow-sm"
+                          : "border border-[#d7c9b5] bg-white text-[var(--ink)] hover:bg-[#fcfaf6]"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
               <button
                 onClick={handleSignOut}
                 className="shrink-0 rounded-full border border-[#d7c9b5] bg-[#f8ddd5]/20 text-[#b24428] px-4 py-2 text-xs font-bold"

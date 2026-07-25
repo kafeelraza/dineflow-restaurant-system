@@ -58,6 +58,7 @@ export default function OrdersPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [settlingOrderId, setSettlingOrderId] = useState<string | null>(null);
   const [stationOnly, setStationOnly] = useState(false);
+  const [activeColumnTab, setActiveColumnTab] = useState<string>("all");
 
   const fetchOrdersData = async () => {
     try {
@@ -291,8 +292,39 @@ export default function OrdersPage() {
             </div>
           )}
 
+          {/* Mobile Column Tab Switcher */}
+          <div className="flex gap-2 overflow-x-auto pb-1 xl:hidden">
+            <button
+              onClick={() => setActiveColumnTab("all")}
+              className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition ${
+                activeColumnTab === "all"
+                  ? "bg-[var(--terracotta)] text-white shadow-sm"
+                  : "border border-[#d7c9b5] bg-white text-[var(--ink)]"
+              }`}
+            >
+              All Columns
+            </button>
+            {columns.map((col) => (
+              <button
+                key={col}
+                onClick={() => setActiveColumnTab(col)}
+                className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition capitalize ${
+                  activeColumnTab === col
+                    ? "bg-[var(--terracotta)] text-white shadow-sm"
+                    : "border border-[#d7c9b5] bg-white text-[var(--ink)]"
+                }`}
+              >
+                {col} ({localOrders.filter((o) => o.status === col).length})
+              </button>
+            ))}
+          </div>
+
           <div className="grid gap-4 xl:grid-cols-5">
             {columns.map((column) => {
+              if (activeColumnTab !== "all" && activeColumnTab !== column) {
+                return null;
+              }
+
               const displayedOrders = stationOnly 
                 ? localOrders.filter((o) => o.assigned_staff_id === userId || o.restaurant_tables?.assigned_staff_id === userId)
                 : localOrders;
