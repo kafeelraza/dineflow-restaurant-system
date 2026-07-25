@@ -284,7 +284,7 @@ export default function OrdersPage() {
 
                         <div className="mt-4 pt-3 border-t border-[#eadfce] space-y-3">
                           {/* Waiter assignment / dropdown info */}
-                          {userRole === "admin" ? (
+                          {userRole === "admin" && column !== "served" ? (
                             <div className="space-y-2">
                               <label className="block text-[10px] font-bold uppercase text-[var(--muted)] tracking-wider">
                                 Dispatch Server
