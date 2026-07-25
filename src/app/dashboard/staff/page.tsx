@@ -95,12 +95,14 @@ export default function StaffPage() {
 
     setUpdatingId(staffId);
     try {
-      const { error } = await supabase
-        .from("restaurant_tables")
-        .update({ assigned_staff_id: staffId })
-        .eq("id", tableId);
+      const res = await fetch("/api/assign-staff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "assign", staffId, tableId }),
+      });
+      const result = await res.json();
 
-      if (error) throw error;
+      if (!result.success) throw new Error(result.error);
       fetchData(); // Reload assignments
     } catch (err: any) {
       alert("Failed to assign table: " + err.message);
@@ -112,12 +114,14 @@ export default function StaffPage() {
   const handleClearAssignments = async (staffId: string) => {
     setUpdatingId(staffId);
     try {
-      const { error } = await supabase
-        .from("restaurant_tables")
-        .update({ assigned_staff_id: null })
-        .eq("assigned_staff_id", staffId);
+      const res = await fetch("/api/assign-staff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "clear", staffId }),
+      });
+      const result = await res.json();
 
-      if (error) throw error;
+      if (!result.success) throw new Error(result.error);
       fetchData();
     } catch (err: any) {
       alert("Failed to clear assignments: " + err.message);
