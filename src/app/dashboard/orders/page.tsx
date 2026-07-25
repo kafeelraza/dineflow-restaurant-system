@@ -35,6 +35,9 @@ interface Order {
   profiles?: {
     full_name: string;
   } | null;
+  waiter_profile?: {
+    full_name: string;
+  } | null;
   restaurant_tables?: {
     table_number: number;
     assigned_staff_id: string | null;
@@ -94,7 +97,13 @@ export default function OrdersPage() {
           table_id,
           restaurant_tables(
             table_number,
-            assigned_staff_id
+            assigned_staff_id,
+            profiles(
+              full_name
+            )
+          ),
+          waiter_profile:profiles!orders_assigned_staff_id_fkey(
+            full_name
           ),
           order_items(
             quantity,
@@ -268,8 +277,8 @@ export default function OrdersPage() {
 
                     // Resolve the waiter name dynamically (dine-in table server, or directly assigned staff)
                     const serverName = order.order_type === "dine-in"
-                      ? (staffMembers.find((s) => s.id === order.restaurant_tables?.assigned_staff_id)?.full_name || "Unassigned")
-                      : (staffMembers.find((s) => s.id === order.assigned_staff_id)?.full_name || "Unassigned");
+                      ? (order.restaurant_tables?.profiles?.full_name || "Unassigned")
+                      : (order.waiter_profile?.full_name || "Unassigned");
 
                     return (
                       <article key={order.id} className="rounded-[8px] bg-[#fcfaf6] p-4 border border-[#eadfce] shadow-sm flex flex-col justify-between">
