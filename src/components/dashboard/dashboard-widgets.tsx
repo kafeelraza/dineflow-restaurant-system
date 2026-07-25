@@ -283,7 +283,7 @@ export function OverviewDashboard() {
       }
 
       setStats({
-        revenue: `Rs. ${(totalRevenue / 1000).toFixed(1)}k`,
+        revenue: formatRs(totalRevenue),
         activeOrders: String(activeCount),
         occupancy: `${occupancyPercent}%`,
         lowStock: String(lowStockCount).padStart(2, "0"),
