@@ -35,7 +35,7 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
   const [items, setItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const waiterName = (order as any)?.profiles?.full_name || (order as any)?.restaurant_tables?.profiles?.full_name || null;
+  const [waiterName, setWaiterName] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrderData = async () => {
@@ -44,26 +44,31 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
         // Fetch order basic details and table number
         const { data: orderData, error: orderErr } = await supabase
           .from("orders")
-          .select(`
-            id, 
-            status, 
-            total_amount, 
-            estimated_ready_at, 
-            profiles!assigned_staff_id (
-              full_name
-            ),
-            restaurant_tables (
-              table_number,
-              profiles!assigned_staff_id (
-                full_name
-              )
-            )
-          `)
+          .select("id, status, total_amount, estimated_ready_at, assigned_staff_id, restaurant_tables(table_number, assigned_staff_id)")
           .eq("id", orderId)
           .single();
 
         if (orderErr) throw orderErr;
         setOrder(orderData as any);
+
+        // Fetch waiter name separately to prevent join embedding conflicts
+        const primaryStaffId = orderData.assigned_staff_id;
+        const tableDetails: any = Array.isArray(orderData.restaurant_tables)
+          ? orderData.restaurant_tables[0]
+          : orderData.restaurant_tables;
+        const tableStaffId = tableDetails?.assigned_staff_id;
+        const targetStaffId = primaryStaffId || tableStaffId;
+
+        if (targetStaffId) {
+          const { data: staffProfile } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", targetStaffId)
+            .single();
+          if (staffProfile) {
+            setWaiterName(staffProfile.full_name);
+          }
+        }
 
         // Fetch items associated with the order
         const { data: itemsData, error: itemsErr } = await supabase
@@ -94,15 +99,7 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
           filter: `id=eq.${orderId}`,
         },
         (payload) => {
-          setOrder((prev) => {
-            if (!prev) return null;
-            return {
-              ...prev,
-              status: payload.new.status,
-              estimated_ready_at: payload.new.estimated_ready_at,
-              total_amount: payload.new.total_amount,
-            };
-          });
+          fetchOrderData();
         }
       )
       .subscribe();
