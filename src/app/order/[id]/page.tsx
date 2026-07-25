@@ -219,14 +219,24 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                     + Order More
                   </Link>
                 )}
-                <Link
-                  href={`/billing/demo?orderId=${order.id}`}
-                  className={`flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--terracotta)] font-bold text-white transition hover:scale-[1.01] text-xs ${
-                    !order.restaurant_tables?.table_number ? "col-span-2" : ""
-                  }`}
-                >
-                  <ReceiptText size={16} /> View bill
-                </Link>
+                {["ready", "served", "billed"].includes(order.status) ? (
+                  <Link
+                    href={`/billing/demo?orderId=${order.id}`}
+                    className={`flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--terracotta)] font-bold text-white transition hover:scale-[1.01] text-xs ${
+                      !order.restaurant_tables?.table_number ? "col-span-2" : ""
+                    }`}
+                  >
+                    <ReceiptText size={16} /> Pay Bill & Receipt
+                  </Link>
+                ) : (
+                  <div
+                    className={`flex h-12 items-center justify-center gap-2 rounded-full bg-[#fcfaf6] border border-[#eadfce] font-semibold text-[var(--muted)] text-xs text-center px-4 ${
+                      !order.restaurant_tables?.table_number ? "col-span-2" : ""
+                    }`}
+                  >
+                    <Clock3 size={14} className="text-[var(--terracotta)] animate-spin" /> Bill unlocks once order is ready/served
+                  </div>
+                )}
               </div>
             </div>
           </Card>

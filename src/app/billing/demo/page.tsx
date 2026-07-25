@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { CreditCard, Download, ReceiptText, Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { CreditCard, Download, ReceiptText, Loader2, ArrowLeft, CheckCircle2, Clock3 } from "lucide-react";
 import Link from "next/link";
 import { AppNav, Card, PageHeader } from "@/components/ui/brand";
 import { formatRs } from "@/lib/data";
@@ -248,10 +248,17 @@ function BillingContent() {
         </div>
       </div>
 
+      {order && !["ready", "served", "billed"].includes(order.status) && (
+        <div className="mt-4 rounded-[8px] bg-[#f8ddd5]/40 border border-[#b24428]/30 p-3.5 text-xs text-[#b24428] font-bold flex items-center gap-2">
+          <Clock3 size={16} className="shrink-0 animate-pulse text-[#b24428]" />
+          <span>Order in preparation! Payment unlocks once the kitchen marks your order as ready or served.</span>
+        </div>
+      )}
+
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         <button
           onClick={handleMarkPaid}
-          disabled={updating || paid}
+          disabled={updating || paid || Boolean(order && !["ready", "served", "billed"].includes(order.status))}
           className="flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--terracotta)] font-bold text-white transition hover:scale-[1.01] disabled:opacity-50"
         >
           {updating ? (
