@@ -1,0 +1,198 @@
+"use client";
+
+import React, { use, useEffect, useState } from "react";
+import Link from "next/link";
+import { Clock3, Loader2, ReceiptText } from "lucide-react";
+import { AppNav, Card, PageHeader } from "@/components/ui/brand";
+import { OrderStepper } from "@/components/customer/customer-widgets";
+import { formatRs } from "@/lib/data";
+import { supabase } from "@/lib/supabaseClient";
+
+interface OrderDetail {
+  id: string;
+  status: string;
+  total_amount: number;
+  estimated_ready_at: string | null;
+  restaurant_tables?: {
+    table_number: number;
+  } | null;
+}
+
+interface OrderItem {
+  id: string;
+  quantity: number;
+  price_at_order: number;
+  menu_items?: {
+    name: string;
+  } | null;
+}
+
+export default function OrderTrackingPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
+  const orderId = resolvedParams.id;
+
+  const [order, setOrder] = useState<OrderDetail | null>(null);
+  const [items, setItems] = useState<OrderItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchOrderData = async () => {
+      try {
+        setLoading(true);
+        // Fetch order basic details and table number
+        const { data: orderData, error: orderErr } = await supabase
+          .from("orders")
+          .select("id, status, total_amount, estimated_ready_at, restaurant_tables(table_number)")
+          .eq("id", orderId)
+          .single();
+
+        if (orderErr) throw orderErr;
+        setOrder(orderData as any);
+
+        // Fetch items associated with the order
+        const { data: itemsData, error: itemsErr } = await supabase
+          .from("order_items")
+          .select("id, quantity, price_at_order, menu_items(name)")
+          .eq("order_id", orderId);
+
+        if (itemsErr) throw itemsErr;
+        setItems(itemsData as any[]);
+      } catch (err: any) {
+        setError(err.message || "Failed to load order information.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrderData();
+
+    // Subscribe to real-time status updates for this order
+    const channel = supabase
+      .channel(`order-realtime-${orderId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `id=eq.${orderId}`,
+        },
+        (payload) => {
+          setOrder((prev) => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              status: payload.new.status,
+              estimated_ready_at: payload.new.estimated_ready_at,
+              total_amount: payload.new.total_amount,
+            };
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [orderId]);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[var(--cream)]">
+        <AppNav />
+        <div className="flex h-[60vh] flex-col items-center justify-center">
+          <Loader2 className="animate-spin text-[var(--terracotta)]" size={40} />
+          <p className="mt-4 font-bold text-[var(--muted)]">Loading order details...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <main className="min-h-screen bg-[var(--cream)]">
+        <AppNav />
+        <div className="mx-auto max-w-xl px-5 py-24 text-center">
+          <h2 className="font-serif text-3xl font-bold text-[var(--ink)]">Order Not Found</h2>
+          <p className="mt-4 text-[var(--muted)]">{error || "The requested order does not exist."}</p>
+          <Link href="/menu" className="mt-6 inline-flex rounded-full bg-[var(--terracotta)] px-6 py-3 font-bold text-white">
+            Return to Menu
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-[var(--cream)]">
+      <AppNav />
+      <section className="mx-auto max-w-6xl px-5 py-14 md:px-8">
+        <PageHeader
+          eyebrow="Live order tracking"
+          title="Your kitchen status is visible"
+          copy="Customers can see ETA, order stage, item details, and move to billing when service is complete."
+        />
+        
+        <div className="mt-12 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+          <Card className="bg-white p-6">
+            <div className="flex flex-col justify-between gap-4 border-b border-[#eadfce] pb-5 md:flex-row md:items-center">
+              <div>
+                <p className="font-mono text-sm font-bold text-[var(--terracotta)]">
+                  ORDER #{order.id.slice(0, 8).toUpperCase()} - TABLE {order.restaurant_tables?.table_number ? `T${String(order.restaurant_tables.table_number).padStart(2, "0")}` : "TAKEAWAY"}
+                </p>
+                <h2 className="mt-1 font-serif text-3xl font-bold capitalize">
+                  {order.status === "placed" && "Order Placed"}
+                  {order.status === "confirmed" && "Chef Confirmed"}
+                  {order.status === "preparing" && "Preparing now"}
+                  {order.status === "ready" && "Ready for Pickup"}
+                  {order.status === "served" && "Served"}
+                  {order.status === "billed" && "Billed"}
+                  {order.status === "cancelled" && "Cancelled"}
+                </h2>
+              </div>
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#eaf2e5] px-4 py-2 font-bold text-[var(--sage)]">
+                <Clock3 size={18} /> 
+                {order.status === "ready" ? "Ready" : order.status === "served" ? "Served" : "Active"}
+              </span>
+            </div>
+            
+            <div className="mt-6">
+              <OrderStepper status={order.status} />
+            </div>
+          </Card>
+          
+          <Card className="p-6">
+            <h2 className="font-serif text-3xl font-bold">Order summary</h2>
+            <div className="mt-5 space-y-3">
+              {items.map((item) => (
+                <div key={item.id} className="flex justify-between rounded-[8px] bg-white p-4">
+                  <div>
+                    <p className="font-bold">{item.menu_items?.name || "Delicious Item"}</p>
+                    <p className="text-sm text-[var(--muted)]">Qty {item.quantity}</p>
+                  </div>
+                  <p className="font-mono font-bold">
+                    {formatRs(item.quantity * item.price_at_order)}
+                  </p>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-5 border-t border-[#eadfce] pt-4">
+              <div className="flex justify-between font-bold">
+                <span>Subtotal</span>
+                <span>{formatRs(order.total_amount)}</span>
+              </div>
+              <Link
+                href={`/billing/demo?orderId=${order.id}`}
+                className="mt-5 flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--ink)] font-bold text-white"
+              >
+                <ReceiptText size={18} /> View bill
+              </Link>
+            </div>
+          </Card>
+        </div>
+      </section>
+    </main>
+  );
+}
