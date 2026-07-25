@@ -19,6 +19,7 @@ import {
   TrendingUp,
   Utensils,
 } from "lucide-react";
+import { AppNav } from "@/components/ui/brand";
 
 const menuItems = [
   {
@@ -137,27 +138,7 @@ function StatCard({ label, value, note }: { label: string; value: string; note: 
 export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-[var(--cream)] text-[var(--ink)]">
-      <nav className="sticky top-0 z-50 border-b border-[#eadfce] bg-[rgba(247,243,236,0.94)]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
-          <Link href="/" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--ink)] text-[var(--terracotta)]">
-              <Utensils size={20} />
-            </span>
-            <span className="font-serif text-2xl font-black">DineFlow</span>
-          </Link>
-          <div className="hidden items-center gap-8 text-sm font-semibold text-[var(--muted)] md:flex">
-            <Link href="/menu" className="hover:text-[var(--ink)]">Menu</Link>
-            <Link href="/#flow" className="hover:text-[var(--ink)]">How it works</Link>
-            <Link href="/login" className="hover:text-[var(--ink)]">For restaurants</Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="hidden text-sm font-bold text-[var(--ink)] sm:block">Login</Link>
-            <Link href="/menu" className="rounded-full bg-[var(--terracotta)] px-5 py-3 text-sm font-bold text-white shadow-[0_10px_24px_rgba(193,98,46,0.18)] transition hover:scale-[1.03]">
-              See what&apos;s cooking
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <AppNav />
 
       <section className="relative mx-auto grid min-h-[calc(100vh-73px)] max-w-7xl items-center gap-10 px-5 py-12 md:grid-cols-[0.95fr_1.05fr] md:px-8 md:py-16">
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65 }}>
@@ -170,11 +151,25 @@ export default function Home() {
           <p className="mt-6 max-w-xl text-lg leading-8 text-[var(--muted)]">
             DineFlow connects the table, kitchen, billing counter, and owner dashboard so guests know what is available and staff know what needs attention.
           </p>
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <Link href="/reserve" className="rounded-full bg-[var(--terracotta)] px-7 py-4 text-base font-bold text-white shadow-[0_16px_32px_rgba(193,98,46,0.24)] transition hover:scale-[1.03]">
+
+          {/* Zomato-Style Action Cards / Pills */}
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <Link
+              href="/reserve"
+              className="rounded-full bg-[var(--terracotta)] px-7 py-4 text-base font-bold text-white shadow-[0_16px_32px_rgba(193,98,46,0.24)] transition hover:scale-[1.03]"
+            >
               Grab a table
             </Link>
-            <Link href="/login" className="rounded-full border border-[#d7c9b5] px-7 py-4 text-base font-bold text-[var(--ink)] transition hover:bg-white">
+            <Link
+              href="/menu"
+              className="rounded-full border border-[#d7c9b5] bg-[#fcfaf6] px-7 py-4 text-base font-bold text-[var(--ink)] transition hover:bg-white hover:scale-[1.02]"
+            >
+              Takeaway Order
+            </Link>
+            <Link
+              href="/dashboard"
+              className="rounded-full border border-[#d7c9b5] bg-transparent px-6 py-4 text-sm font-bold text-[var(--muted)] transition hover:text-[var(--ink)] hover:bg-white/60"
+            >
               View owner dashboard
             </Link>
           </div>
