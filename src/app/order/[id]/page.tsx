@@ -35,6 +35,7 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
   const [items, setItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const waiterName = (order as any)?.profiles?.full_name || (order as any)?.restaurant_tables?.profiles?.full_name || null;
 
   useEffect(() => {
     const fetchOrderData = async () => {
@@ -43,7 +44,21 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
         // Fetch order basic details and table number
         const { data: orderData, error: orderErr } = await supabase
           .from("orders")
-          .select("id, status, total_amount, estimated_ready_at, restaurant_tables(table_number)")
+          .select(`
+            id, 
+            status, 
+            total_amount, 
+            estimated_ready_at, 
+            profiles!assigned_staff_id (
+              full_name
+            ),
+            restaurant_tables (
+              table_number,
+              profiles!assigned_staff_id (
+                full_name
+              )
+            )
+          `)
           .eq("id", orderId)
           .single();
 
@@ -150,6 +165,12 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                   {order.status === "billed" && "Billed"}
                   {order.status === "cancelled" && "Cancelled"}
                 </h2>
+                {waiterName && (
+                  <p className="mt-2 text-xs font-bold text-[var(--muted)] flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-[var(--terracotta)] animate-pulse text-xs"></span>
+                    Your Server: <span className="text-[var(--ink)] font-extrabold">{waiterName}</span>
+                  </p>
+                )}
               </div>
               <span className="inline-flex items-center gap-2 rounded-full bg-[#eaf2e5] px-4 py-2 font-bold text-[var(--sage)]">
                 <Clock3 size={18} /> 
