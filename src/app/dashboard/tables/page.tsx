@@ -77,17 +77,35 @@ export default function TablesPage() {
     const nextStatus = cycle[nextIndex];
 
     try {
+      // 1. Update the table status
       const { error } = await supabase
         .from("restaurant_tables")
         .update({ status: nextStatus })
         .eq("id", table.id);
 
       if (error) throw error;
+
+      // 2. If table is set to available or cleaning, complete any currently active reservation
+      if (nextStatus === "available" || nextStatus === "cleaning") {
+        const now = new Date();
+        const activeRes = queue.find((res) => {
+          if (res.table_id !== table.id) return false;
+          const parts = res.name.split(" | ");
+          const durationHours = parts[1] ? parseInt(parts[1]) : 2;
+          const resStart = new Date(res.reserved_at);
+          const resEnd = new Date(resStart.getTime() + durationHours * 60 * 60 * 1000);
+          return now >= resStart && now < resEnd;
+        });
+
+        if (activeRes) {
+          await supabase
+            .from("reservations")
+            .update({ status: "completed" })
+            .eq("id", activeRes.id);
+        }
+      }
       
-      // Optimistic update
-      setLocalTables((current) =>
-        current.map((row) => (row.id === table.id ? { ...row, status: nextStatus } : row))
-      );
+      fetchData(); // Reload table statuses and queue list
     } catch (err) {
       console.error("Failed to cycle table status:", err);
     }
