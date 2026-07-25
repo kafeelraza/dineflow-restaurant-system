@@ -334,7 +334,7 @@ export default function ReservePage() {
               </div>
             ) : (
               <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-                {tablesList.slice(0, 12).map((table) => {
+                {tablesList.map((table) => {
                   const isSelected = selectedTableId === table.id;
                   const activeRes = getTableReservationAtSelectedTime(table.id);
                   const isAvailable = !activeRes && table.status === "available";
