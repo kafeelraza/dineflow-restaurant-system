@@ -157,6 +157,15 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
               </span>
             </div>
             
+            {/* Order Recovery Information Banner */}
+            <div className="mb-6 rounded-[8px] bg-[#fcfaf6] border border-[#eadfce] p-4 text-xs leading-relaxed text-[var(--muted)] font-semibold flex items-start gap-2.5">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#f8eadf] text-[var(--terracotta)] font-mono font-bold">!</span>
+              <div>
+                <p className="font-bold text-[var(--ink)] mb-0.5">Order Tracking Tip</p>
+                Save your Order ID: <span className="font-mono font-bold text-[var(--terracotta)]">#{order.id.slice(0, 4).toUpperCase()}</span>. If you close this tab, you can restore your tracking anytime at <Link href="/order" className="underline text-[var(--terracotta)] font-bold">/order</Link> using this ID and your guest name!
+              </div>
+            </div>
+
             <div className="mt-6">
               <OrderStepper status={order.status} />
             </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, QrCode, X } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/dashboard-widgets";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -29,6 +29,7 @@ export default function TablesPage() {
   const [localTables, setLocalTables] = useState<Table[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedQrTable, setSelectedQrTable] = useState<Table | null>(null);
 
   const fetchData = async () => {
     try {
@@ -111,7 +112,19 @@ export default function TablesPage() {
                   "bg-[#f8ddd5] text-[#b24428]"
                 }`}
               >
-                <span className="block text-2xl">T{String(table.table_number).padStart(2, "0")}</span>
+                <div className="flex justify-between items-start w-full">
+                  <span className="block text-2xl">T{String(table.table_number).padStart(2, "0")}</span>
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedQrTable(table);
+                    }}
+                    className="p-1 rounded-full hover:bg-black/10 transition text-inherit cursor-pointer"
+                    title="View QR Code"
+                  >
+                    <QrCode size={18} />
+                  </span>
+                </div>
                 <span className="capitalize">{table.status}</span>
                 <span className="mt-3 block text-xs text-[var(--muted)]">Seats {table.capacity}</span>
                 {table.profiles?.full_name && (
@@ -143,6 +156,58 @@ export default function TablesPage() {
               )}
             </div>
           </aside>
+        </div>
+      )}
+
+      {selectedQrTable && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-[12px] border border-[#eadfce] bg-white p-6 shadow-xl relative animate-in fade-in zoom-in duration-200">
+            <button
+              onClick={() => setSelectedQrTable(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-[#fcfaf6] text-[var(--muted)] hover:text-[var(--ink)] transition"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="text-center mt-2">
+              <h3 className="font-serif text-xl font-bold text-[var(--ink)]">Table T{String(selectedQrTable.table_number).padStart(2, "0")} QR Code</h3>
+              <p className="text-xs text-[var(--muted)] mt-1.5 leading-relaxed">Scan this code with a mobile camera to open the menu for this table.</p>
+
+              <div className="my-6 flex justify-center bg-[#fcfaf6] p-4 rounded-[8px] border border-[#eadfce] inline-block mx-auto">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(
+                    typeof window !== "undefined"
+                      ? `${window.location.origin}/menu?table=${selectedQrTable.table_number}`
+                      : ""
+                  )}`}
+                  alt={`Table ${selectedQrTable.table_number} QR Code`}
+                  className="w-48 h-48 rounded-[6px]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <a
+                  href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(
+                    typeof window !== "undefined"
+                      ? `${window.location.origin}/menu?table=${selectedQrTable.table_number}`
+                      : ""
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-[var(--terracotta)] text-white text-xs font-bold transition hover:scale-[1.01]"
+                >
+                  Open High-Res QR Code
+                </a>
+                <button
+                  onClick={() => setSelectedQrTable(null)}
+                  className="flex h-10 w-full items-center justify-center rounded-full border border-[#d7c9b5] bg-[#fcfaf6] text-xs font-bold text-[var(--ink)] hover:bg-[#fcfaf6]/50 transition"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </DashboardShell>
