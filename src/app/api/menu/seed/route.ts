@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseClient';
 
 export async function GET() {
+  if (!supabaseAdmin) {
+    return NextResponse.json({ success: false, error: "Database admin client is not initialized on the server-side." }, { status: 500 });
+  }
+
   try {
     // 1. Seed Menu Categories
     const categoriesList = ["Chef picks", "Starters", "Mains", "Beverages", "Desserts"];

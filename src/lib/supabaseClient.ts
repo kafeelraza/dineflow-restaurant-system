@@ -7,11 +7,14 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Admin client that uses the service role key to bypass RLS policies on the server side
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  }
-});
+export const supabaseAdmin =
+  typeof window === "undefined" && supabaseServiceKey
+    ? createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+      })
+    : null;
 
 export default supabase;
