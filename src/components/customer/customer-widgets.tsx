@@ -37,7 +37,7 @@ export function MenuExperience() {
   const [orderLoading, setOrderLoading] = useState(false);
 
   // Table selection states
-  const [tablesList, setTablesList] = useState<{ id: string; table_number: number }[]>([]);
+  const [tablesList, setTablesList] = useState<{ id: string; table_number: number; status: string }[]>([]);
   const [orderType, setOrderType] = useState<"dine-in" | "takeaway">("takeaway");
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [selectedTableNumber, setSelectedTableNumber] = useState<number | null>(null);
@@ -50,7 +50,7 @@ export function MenuExperience() {
         // Fetch Tables List
         const { data: dbTables } = await supabase
           .from("restaurant_tables")
-          .select("id, table_number")
+          .select("id, table_number, status")
           .order("table_number", { ascending: true });
 
         const loadedTables = (dbTables as any[]) || [];
@@ -349,12 +349,17 @@ export function MenuExperience() {
                         }}
                         className="h-10 w-full rounded-[8px] border border-[#d7c9b5] bg-white px-2 text-xs font-bold outline-none capitalize"
                       >
-                        {tablesList.map((t) => (
-                          <option key={t.id} value={t.id}>
-                            Table T{String(t.table_number).padStart(2, "0")}
-                          </option>
-                        ))}
-                      </select>
+                        {tablesList.filter((t) => t.status === "available" || t.status === "cleaning").length === 0 ? (
+                          <option value="">No tables available</option>
+                        ) : (
+                          tablesList
+                            .filter((t) => t.status === "available" || t.status === "cleaning")
+                            .map((t) => (
+                              <option key={t.id} value={t.id}>
+                                Table T{String(t.table_number).padStart(2, "0")}
+                              </option>
+                            ))
+                        )}</select>
                     )}
                   </div>
                 )}

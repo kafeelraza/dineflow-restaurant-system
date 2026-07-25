@@ -31,6 +31,7 @@ interface Order {
   guest_name: string | null;
   guest_phone: string | null;
   assigned_staff_id: string | null;
+  table_id: string | null;
   profiles?: {
     full_name: string;
   } | null;
@@ -90,6 +91,7 @@ export default function OrdersPage() {
           guest_name,
           guest_phone,
           assigned_staff_id,
+          table_id,
           restaurant_tables(
             table_number,
             assigned_staff_id
@@ -203,16 +205,27 @@ export default function OrdersPage() {
   const confirmSettleAndArchive = async () => {
     if (!settlingOrderId) return;
     const orderId = settlingOrderId;
+    const orderToSettle = localOrders.find((o) => o.id === orderId);
     setSettlingOrderId(null);
     setUpdatingId(orderId);
 
     try {
+      // 1. Mark order as settled
       const { error } = await supabase
         .from("orders")
         .update({ status: "billed" })
         .eq("id", orderId);
 
       if (error) throw error;
+
+      // 2. Release the associated table back to available
+      if (orderToSettle && orderToSettle.table_id) {
+        await supabase
+          .from("restaurant_tables")
+          .update({ status: "available" })
+          .eq("id", orderToSettle.table_id);
+      }
+
       fetchOrdersData();
     } catch (err: any) {
       alert("Failed to settle order: " + err.message);

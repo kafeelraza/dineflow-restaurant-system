@@ -1,4 +1,4 @@
-const url = 'https://ljxftjhrfajyemipqwhe.supabase.co/rest/v1/restaurant_tables?select=id,table_number,assigned_staff_id';
+const url = 'https://ljxftjhrfajyemipqwhe.supabase.co/rest/v1/profiles?select=id,full_name,role';
 const apikey = 'sb_publishable_P9IGXGkM5YWyaYUkbzL4eA_HTkVjOyt';
 
 fetch(url, {
@@ -9,7 +9,7 @@ fetch(url, {
 })
 .then(res => res.json())
 .then(data => {
-  console.log("TABLE DETAILS WITH ID:");
+  console.log("PROFILES IN DATABASE:");
   console.log(JSON.stringify(data, null, 2));
 })
-.catch(err => console.error("Error fetching table details:", err));
+.catch(err => console.error("Error fetching profiles:", err));
