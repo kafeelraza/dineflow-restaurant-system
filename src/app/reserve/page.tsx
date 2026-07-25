@@ -20,11 +20,13 @@ export default function ReservePage() {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [time, setTime] = useState("20:30");
   const [guests, setGuests] = useState(4);
+  const [duration, setDuration] = useState(2); // default 2 hours
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [tablesLoading, setTablesLoading] = useState(true);
   const [reservedTableNumber, setReservedTableNumber] = useState<number | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [activeReservations, setActiveReservations] = useState<any[]>([]);
 
   const fetchTables = async () => {
     try {
@@ -42,25 +44,61 @@ export default function ReservePage() {
     }
   };
 
+  const fetchReservations = async () => {
+    try {
+      const startOfDay = new Date(date + "T00:00:00").toISOString();
+      const endOfDay = new Date(date + "T23:59:59").toISOString();
+
+      const { data, error } = await supabase
+        .from("reservations")
+        .select("id, table_id, name, party_size, reserved_at, status")
+        .in("status", ["pending", "confirmed"])
+        .gte("reserved_at", startOfDay)
+        .lte("reserved_at", endOfDay);
+
+      if (error) throw error;
+      setActiveReservations(data || []);
+    } catch (err) {
+      console.error("Failed to load reservations for date:", err);
+    }
+  };
+
   useEffect(() => {
     fetchTables();
+    fetchReservations();
 
-    // Subscribe to real-time table status updates
+    // Subscribe to real-time table status and reservation updates
     const channel = supabase
       .channel("tables-reserve-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "restaurant_tables" },
-        () => {
-          fetchTables();
-        }
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "restaurant_tables" }, () => fetchTables())
+      .on("postgres_changes", { event: "*", schema: "public", table: "reservations" }, () => fetchReservations())
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [date]);
+
+  useEffect(() => {
+    setSelectedTableId(null);
+  }, [date, time]);
+
+  const getTableReservationAtSelectedTime = (tableId: string) => {
+    const selectedStart = new Date(`${date}T${time}:00`);
+
+    return activeReservations.find((res) => {
+      if (res.table_id !== tableId) return false;
+
+      // Parse duration from name (format: "Name | Xh")
+      const parts = res.name.split(" | ");
+      const durationHours = parts[1] ? parseInt(parts[1]) : 2;
+
+      const resStart = new Date(res.reserved_at);
+      const resEnd = new Date(resStart.getTime() + durationHours * 60 * 60 * 1000);
+
+      return selectedStart >= resStart && selectedStart < resEnd;
+    });
+  };
 
   const handleConfirmReservation = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,11 +119,14 @@ export default function ReservePage() {
       // 1. Fetch user to link if logged in
       const { data: { user } } = await supabase.auth.getUser();
 
+      // Store duration inside name as "Name | Xh"
+      const storedName = `${name} | ${duration}h`;
+
       // 2. Insert reservation
       const { error: reserveErr } = await supabase.from("reservations").insert({
         customer_id: user?.id || null,
         table_id: selectedTableId,
-        name,
+        name: storedName,
         phone,
         party_size: guests,
         reserved_at: new Date(reservedAtString).toISOString(),
@@ -187,7 +228,7 @@ export default function ReservePage() {
                     />
                   </label>
                   
-                  <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="grid gap-4 sm:grid-cols-4">
                     <label>
                       <span className="text-sm font-bold">Date</span>
                       <input
@@ -220,6 +261,19 @@ export default function ReservePage() {
                         required
                       />
                     </label>
+                    <label>
+                      <span className="text-sm font-bold">Duration</span>
+                      <select
+                        value={duration}
+                        onChange={(e) => setDuration(Number(e.target.value))}
+                        className="mt-2 h-12 w-full rounded-[8px] border border-[#d7c9b5] bg-[#fcfaf6] px-3 outline-none focus:border-[var(--terracotta)] text-sm font-bold"
+                      >
+                        <option value={1}>1 Hour</option>
+                        <option value={2}>2 Hours</option>
+                        <option value={3}>3 Hours</option>
+                        <option value={4}>4 Hours</option>
+                      </select>
+                    </label>
                   </div>
 
                   <button
@@ -246,7 +300,17 @@ export default function ReservePage() {
               <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
                 {tablesList.slice(0, 12).map((table) => {
                   const isSelected = selectedTableId === table.id;
-                  const isAvailable = table.status === "available";
+                  const activeRes = getTableReservationAtSelectedTime(table.id);
+                  const isAvailable = !activeRes && table.status === "available";
+
+                  let endTimeString = "";
+                  if (activeRes) {
+                    const resStart = new Date(activeRes.reserved_at);
+                    const parts = activeRes.name.split(" | ");
+                    const durationHours = parts[1] ? parseInt(parts[1]) : 2;
+                    const resEnd = new Date(resStart.getTime() + durationHours * 60 * 60 * 1000);
+                    endTimeString = resEnd.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                  }
 
                   return (
                     <button
@@ -257,18 +321,22 @@ export default function ReservePage() {
                       className={`rounded-[8px] p-4 text-left text-sm font-bold transition hover:scale-[1.02] disabled:cursor-not-allowed ${
                         isSelected
                           ? "bg-[var(--terracotta)] text-white shadow-md border-2 border-[var(--terracotta)]"
-                          : table.status === "available"
+                          : isAvailable
                           ? "bg-[#eaf2e5] text-[#4f7d52] border border-[#eadfce]"
-                          : table.status === "reserved"
-                          ? "bg-[#fbf0cf] text-[#a07012] opacity-60 border border-[#eadfce]"
+                          : activeRes
+                          ? "bg-[#fbf0cf] text-[#a07012] opacity-80 border border-[#eadfce]"
                           : table.status === "cleaning"
                           ? "bg-[#ece7df] text-[#8a7f71] opacity-60 border border-[#eadfce]"
                           : "bg-[#f8ddd5] text-[#b24428] opacity-60 border border-[#eadfce]"
                       }`}
                     >
                       <span className="block text-lg">T{String(table.table_number).padStart(2, "0")}</span>
-                      <span className="capitalize">{table.status}</span>
-                      <span className="mt-2 block text-xs">Seats {table.capacity}</span>
+                      <span className="capitalize">
+                        {activeRes ? "Booked" : table.status}
+                      </span>
+                      <span className="mt-2 block text-xs leading-normal">
+                        {activeRes ? `Free after ${endTimeString}` : `Seats ${table.capacity}`}
+                      </span>
                     </button>
                   );
                 })}
