@@ -32,6 +32,7 @@ const nav = [
   { href: "/dashboard/staff", label: "Staff", icon: Users },
   { href: "/dashboard/history", label: "History", icon: History },
   { href: "/dashboard/customers", label: "Customers", icon: CreditCard },
+  { href: "/dashboard/performance", label: "My Performance", icon: BarChart3 },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/ai", label: "AI Ops", icon: Bot },
 ];
@@ -65,7 +66,7 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
 
         // If staff, restrict access to only orders and tables pages
         if (profile.role === "staff") {
-          const allowedStaffPages = ["/dashboard/orders", "/dashboard/tables"];
+          const allowedStaffPages = ["/dashboard/orders", "/dashboard/tables", "/dashboard/performance"];
           if (!allowedStaffPages.includes(pathname)) {
             router.push("/dashboard/orders");
             return;
@@ -117,7 +118,7 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
             {nav
               .filter((item) => {
                 if (role === "staff") {
-                  return ["/dashboard/orders", "/dashboard/tables"].includes(item.href);
+                  return ["/dashboard/orders", "/dashboard/tables", "/dashboard/performance"].includes(item.href);
                 }
                 return true;
               })
@@ -165,7 +166,7 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
               {nav
                 .filter((item) => {
                   if (role === "staff") {
-                    return ["/dashboard/orders", "/dashboard/tables"].includes(item.href);
+                    return ["/dashboard/orders", "/dashboard/tables", "/dashboard/performance"].includes(item.href);
                   }
                   return true;
                 })
