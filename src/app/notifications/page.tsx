@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, CheckCircle2, Loader2, Trash2 } from "lucide-react";
+import { Bell, CheckCircle2, Loader2, Trash2, ArrowLeft } from "lucide-react";
 import { AppNav, Card, PageHeader } from "@/components/ui/brand";
 import { supabase } from "@/lib/supabaseClient";
+import Link from "next/link";
 
 interface DbNotification {
   id: string;
@@ -69,6 +70,14 @@ export default function NotificationsPage() {
     <main className="min-h-screen bg-[var(--cream)]">
       <AppNav />
       <section className="mx-auto max-w-4xl px-5 py-14 md:px-8">
+        <div className="mb-6">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--muted)] hover:text-[var(--ink)] transition"
+          >
+            <ArrowLeft size={13} /> Back to dashboard
+          </Link>
+        </div>
         <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
           <PageHeader
             eyebrow="Smart notifications"
