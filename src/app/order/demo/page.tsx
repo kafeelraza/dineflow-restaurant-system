@@ -39,7 +39,7 @@ export default function OrderTrackingPage() {
             </div>
             <div className="mt-5 border-t border-[#eadfce] pt-4">
               <div className="flex justify-between font-bold"><span>Subtotal</span><span>{formatRs(subtotal)}</span></div>
-              <Link href="/billing/demo" className="mt-5 flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--ink)] font-bold text-white"><ReceiptText size={18} /> View bill</Link>
+              <Link href="/billing/demo?orderId=demo-1842" className="mt-5 flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--ink)] font-bold text-white"><ReceiptText size={18} /> View bill</Link>
             </div>
           </Card>
         </div>

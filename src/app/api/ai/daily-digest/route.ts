@@ -104,10 +104,15 @@ Instructions:
 
     return NextResponse.json({
       success: true,
+      digest: insightsList.join(" "),
       insights: insightsList,
     });
   } catch (error: any) {
     console.error('Daily Digest Generation Error:', error);
     return NextResponse.json({ error: error.message || 'Failed to generate digest' }, { status: 500 });
   }
+}
+
+export async function POST() {
+  return GET();
 }

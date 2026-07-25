@@ -5,6 +5,7 @@ import { Loader2, Clock3, ArrowRight, UserCheck, CheckCircle2, AlertCircle } fro
 import { DashboardShell } from "@/components/dashboard/dashboard-widgets";
 import { formatRs } from "@/lib/data";
 import { supabase } from "@/lib/supabaseClient";
+import { claimOrder } from "@/lib/supabaseHelpers";
 
 type OrderStatus = "placed" | "confirmed" | "preparing" | "ready" | "served";
 const columns: OrderStatus[] = ["placed", "confirmed", "preparing", "ready", "served"];
@@ -212,15 +213,10 @@ export default function OrdersPage() {
   const handleClaimOrder = async (orderId: string) => {
     try {
       setUpdatingId(orderId);
-      const { error } = await supabase
-        .from("orders")
-        .update({ assigned_staff_id: userId })
-        .eq("id", orderId);
-
-      if (error) throw error;
+      await claimOrder(orderId);
       fetchOrdersData();
     } catch (err: any) {
-      alert("Failed to claim order: " + err.message);
+      alert("Failed to claim order: " + (err.message || "Could not claim order"));
     } finally {
       setUpdatingId(null);
     }

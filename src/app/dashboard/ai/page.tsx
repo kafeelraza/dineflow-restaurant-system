@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BellRing, Bot, Brain, ChefHat, PackageSearch, Sparkles, Loader2 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/dashboard-widgets";
 import { aiInsights, formatRs, inventory, menuItems, orders } from "@/lib/data";
@@ -10,6 +10,19 @@ export default function AIOpsPage() {
   const [chefs, setChefs] = useState(3);
   const [digestLoading, setDigestLoading] = useState(false);
   const [customDigest, setCustomDigest] = useState<string | null>(null);
+
+  const [liveEta, setLiveEta] = useState<number | null>(null);
+  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/ai/wait-time", { method: "POST" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.eta) setLiveEta(data.eta);
+        if (data.suggestion) setAiSuggestion(data.suggestion);
+      })
+      .catch((err) => console.error("Wait-time API error:", err));
+  }, []);
 
   const handleGenerateDigest = async () => {
     try {
@@ -42,10 +55,12 @@ export default function AIOpsPage() {
             <label><span className="text-sm font-bold">Pending orders: {pending}</span><input type="range" min="1" max="20" value={pending} onChange={(event) => setPending(Number(event.target.value))} className="mt-3 w-full accent-[#c1622e]" /></label>
             <label><span className="text-sm font-bold">Active chefs: {chefs}</span><input type="range" min="1" max="8" value={chefs} onChange={(event) => setChefs(Number(event.target.value))} className="mt-3 w-full accent-[#7a8b6f]" /></label>
           </div>
-          <div className="mt-6 rounded-[8px] bg-[#fcfaf6] p-5">
+          <div className="mt-6 rounded-[8px] bg-[#fcfaf6] border border-[#eadfce] p-5">
             <p className="text-sm font-bold uppercase tracking-[0.16em] text-[var(--terracotta)]">Predicted customer ETA</p>
-            <p className="mt-2 font-mono text-5xl font-black">~{eta} min</p>
-            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Kitchen load is moderate. Suggest drinks or quick starters if guests are waiting.</p>
+            <p className="mt-2 font-mono text-5xl font-black">~{liveEta ?? eta} min</p>
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)] font-semibold">
+              {aiSuggestion || "Kitchen load is moderate. Suggest drinks or quick starters if guests are waiting."}
+            </p>
           </div>
         </section>
 
