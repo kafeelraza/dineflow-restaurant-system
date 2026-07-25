@@ -13,6 +13,22 @@ interface Table {
   status: "available" | "occupied" | "reserved" | "cleaning";
 }
 
+const timeSlots = [
+  "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", 
+  "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", 
+  "21:00", "21:30", "22:00", "22:30", "23:00"
+];
+
+const getNext7Days = () => {
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    days.push(d);
+  }
+  return days;
+};
+
 export default function ReservePage() {
   const [tablesList, setTablesList] = useState<Table[]>([]);
   const [name, setName] = useState("");
@@ -231,23 +247,43 @@ export default function ReservePage() {
                   <div className="grid gap-4 sm:grid-cols-4">
                     <label>
                       <span className="text-sm font-bold">Date</span>
-                      <input
-                        type="date"
+                      <select
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
-                        className="mt-2 h-12 w-full rounded-[8px] border border-[#d7c9b5] bg-[#fcfaf6] px-4 outline-none focus:border-[var(--terracotta)] text-sm font-bold"
-                        required
-                      />
+                        className="mt-2 h-12 w-full rounded-[8px] border border-[#d7c9b5] bg-[#fcfaf6] px-3 outline-none focus:border-[var(--terracotta)] text-sm font-bold capitalize"
+                      >
+                        {getNext7Days().map((d, i) => {
+                          const dateVal = d.toISOString().split("T")[0];
+                          const label = d.toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric' });
+                          const dayName = i === 0 ? "Today" : i === 1 ? "Tomorrow" : "";
+                          return (
+                            <option key={dateVal} value={dateVal}>
+                              {dayName ? `${dayName} (${label})` : label}
+                            </option>
+                          );
+                        })}
+                      </select>
                     </label>
                     <label>
                       <span className="text-sm font-bold">Time</span>
-                      <input
-                        type="time"
+                      <select
                         value={time}
                         onChange={(e) => setTime(e.target.value)}
-                        className="mt-2 h-12 w-full rounded-[8px] border border-[#d7c9b5] bg-[#fcfaf6] px-4 outline-none focus:border-[var(--terracotta)] text-sm font-bold"
-                        required
-                      />
+                        className="mt-2 h-12 w-full rounded-[8px] border border-[#d7c9b5] bg-[#fcfaf6] px-3 outline-none focus:border-[var(--terracotta)] text-sm font-bold"
+                      >
+                        {timeSlots.map((slot) => {
+                          const [h, m] = slot.split(":");
+                          const hour = parseInt(h);
+                          const ampm = hour >= 12 ? "PM" : "AM";
+                          const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+                          const displayTime = `${String(displayHour).padStart(2, "0")}:${m} ${ampm}`;
+                          return (
+                            <option key={slot} value={slot}>
+                              {displayTime}
+                            </option>
+                          );
+                        })}
+                      </select>
                     </label>
                     <label>
                       <span className="text-sm font-bold">Guests</span>
