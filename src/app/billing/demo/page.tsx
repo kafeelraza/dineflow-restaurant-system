@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { CreditCard, Download, ReceiptText, Loader2, ArrowLeft } from "lucide-react";
+import { CreditCard, Download, ReceiptText, Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { AppNav, Card, PageHeader } from "@/components/ui/brand";
 import { formatRs } from "@/lib/data";
@@ -41,6 +41,7 @@ function BillingContent() {
   const [error, setError] = useState<string | null>(null);
   const [paid, setPaid] = useState(false);
   const [allOrderIds, setAllOrderIds] = useState<string[]>([]);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const fetchBillData = async () => {
     if (!orderId) {
@@ -139,10 +140,21 @@ function BillingContent() {
         payment_method: "card",
       }, { onConflict: "order_id" });
 
+      // 4. Send database notification to the Owner
+      const notificationMsg = order?.restaurant_tables?.table_number
+        ? `Table T${String(order.restaurant_tables.table_number).padStart(2, "0")} bill of Rs. ${total} has been settled & paid.`
+        : `Takeaway bill for ${order?.guest_name || "Guest"} of Rs. ${total} has been settled & paid.`;
+
+      await supabase.from("notifications").insert({
+        message: notificationMsg,
+        is_read: false
+      });
+
       setPaid(true);
       if (order) {
         setOrder({ ...order, status: "billed" });
       }
+      setShowSuccessModal(true);
     } catch (err: any) {
       alert("Failed to mark bill as paid: " + (err.message || "Unknown error"));
     } finally {
@@ -258,6 +270,58 @@ function BillingContent() {
         </button>
       </div>
 
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <Card className="max-w-md w-full bg-white p-8 border border-[#eadfce] rounded-[16px] text-center shadow-xl transform scale-100 transition animate-in fade-in zoom-in-95 duration-200">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#eaf2e5] text-[#4f7d52] mb-5">
+              <CheckCircle2 size={36} className="animate-bounce" />
+            </div>
+            
+            <h3 className="font-serif text-3xl font-bold text-[var(--ink)]">Payment Successful!</h3>
+            <p className="text-sm text-[var(--muted)] mt-2 leading-relaxed font-semibold">
+              Your transaction has been successfully processed and settled. Thank you for dining with us!
+            </p>
+
+            <div className="my-6 rounded-[12px] bg-[#fcfaf6] border border-[#eadfce] p-4 text-left space-y-2">
+              <div className="flex justify-between text-xs text-[var(--muted)] font-semibold">
+                <span>Settlement ID:</span>
+                <span className="font-mono text-[var(--ink)]">#S-{orderId?.slice(0,8).toUpperCase()}</span>
+              </div>
+              <div className="flex justify-between text-xs text-[var(--muted)] font-semibold">
+                <span>Mode:</span>
+                <span className="text-[var(--ink)] font-bold capitalize">
+                  {order?.restaurant_tables?.table_number ? `Dine-In (Table T${order.restaurant_tables.table_number})` : "Takeaway"}
+                </span>
+              </div>
+              <div className="flex justify-between text-xs text-[var(--muted)] font-semibold border-t border-[#eadfce] pt-2 mt-2">
+                <span className="font-bold text-[var(--ink)]">Amount Paid:</span>
+                <span className="font-mono font-bold text-[var(--terracotta)] text-sm">Rs. {total}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              <button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  window.print();
+                }}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--terracotta)] font-bold text-white transition hover:scale-[1.01]"
+              >
+                <Download size={18} /> Print Invoice
+              </button>
+              <button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  router.push("/menu");
+                }}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#d7c9b5] bg-[#fcfaf6] font-bold text-[var(--ink)] transition hover:bg-white"
+              >
+                Return to Home
+              </button>
+            </div>
+          </Card>
+        </div>
+      )}
       <div className="mt-6 text-center">
         <Link
           href={`/order/${order.id}`}
