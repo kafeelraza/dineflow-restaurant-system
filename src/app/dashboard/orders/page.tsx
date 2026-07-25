@@ -69,14 +69,12 @@ export default function OrdersPage() {
       const role = profile?.role || "customer";
       setUserRole(role);
 
-      // 2. Fetch staff members list (for admin dropdown)
-      if (role === "admin") {
-        const { data: staffData } = await supabase
-          .from("profiles")
-          .select("id, full_name")
-          .eq("role", "staff");
-        setStaffMembers((staffData as StaffMember[]) || []);
-      }
+      // 2. Fetch staff members list (for dropdown and client-side name lookup)
+      const { data: staffData } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .eq("role", "staff");
+      setStaffMembers((staffData as StaffMember[]) || []);
 
       // 3. Build active orders query (exclude completed 'billed' ones)
       let query = supabase
@@ -91,11 +89,9 @@ export default function OrdersPage() {
           guest_name,
           guest_phone,
           assigned_staff_id,
-          profiles:assigned_staff_id(full_name),
           restaurant_tables(
             table_number,
-            assigned_staff_id,
-            profiles:assigned_staff_id(full_name)
+            assigned_staff_id
           ),
           order_items(
             quantity,
@@ -252,8 +248,8 @@ export default function OrdersPage() {
 
                     // Resolve the waiter name dynamically (dine-in table server, or directly assigned staff)
                     const serverName = order.order_type === "dine-in"
-                      ? order.restaurant_tables?.profiles?.full_name
-                      : order.profiles?.full_name;
+                      ? (staffMembers.find((s) => s.id === order.restaurant_tables?.assigned_staff_id)?.full_name || "Unassigned")
+                      : (staffMembers.find((s) => s.id === order.assigned_staff_id)?.full_name || "Unassigned");
 
                     return (
                       <article key={order.id} className="rounded-[8px] bg-[#fcfaf6] p-4 border border-[#eadfce] shadow-sm flex flex-col justify-between">
