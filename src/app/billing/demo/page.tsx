@@ -23,6 +23,7 @@ interface BillOrder {
   total_amount: number;
   guest_name: string | null;
   guest_phone: string | null;
+  table_id?: string | null;
   restaurant_tables?: {
     table_number: number;
   } | null;
@@ -39,6 +40,7 @@ function BillingContent() {
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paid, setPaid] = useState(false);
+  const [allOrderIds, setAllOrderIds] = useState<string[]>([]);
 
   const fetchBillData = async () => {
     if (!orderId) {
@@ -52,7 +54,7 @@ function BillingContent() {
       // 1. Fetch order details
       const { data: orderData, error: orderErr } = await supabase
         .from("orders")
-        .select("id, status, total_amount, guest_name, guest_phone, restaurant_tables(table_number)")
+        .select("id, status, total_amount, guest_name, guest_phone, table_id, restaurant_tables(table_number)")
         .eq("id", orderId)
         .single();
 
@@ -62,11 +64,30 @@ function BillingContent() {
         setPaid(true);
       }
 
-      // 2. Fetch order items
+      // Consolidate active sibling orders for this table if it is Dine-In
+      let orderIds = [orderId];
+      if (orderData.table_id) {
+        const { data: siblingOrders } = await supabase
+          .from("orders")
+          .select("id")
+          .eq("table_id", orderData.table_id)
+          .neq("status", "billed");
+
+        if (siblingOrders && siblingOrders.length > 0) {
+          const activeIds = siblingOrders.map((o) => o.id);
+          // Only consolidate if our current order is part of the active session
+          if (activeIds.includes(orderId)) {
+            orderIds = activeIds;
+          }
+        }
+      }
+      setAllOrderIds(orderIds);
+
+      // 2. Fetch order items for all these consolidated orders
       const { data: itemsData, error: itemsErr } = await supabase
         .from("order_items")
         .select("id, quantity, price_at_order, menu_items(name)")
-        .eq("order_id", orderId);
+        .in("order_id", orderIds);
 
       if (itemsErr) throw itemsErr;
       setItems(itemsData as any[]);
@@ -82,19 +103,27 @@ function BillingContent() {
   }, [orderId]);
 
   const handleMarkPaid = async () => {
-    if (!orderId) return;
+    if (allOrderIds.length === 0) return;
     setUpdating(true);
 
     try {
-      // 1. Update order status to 'billed'
+      // 1. Update order status to 'billed' for all consolidated orders
       const { error: orderErr } = await supabase
         .from("orders")
         .update({ status: "billed" })
-        .eq("id", orderId);
+        .in("id", allOrderIds);
 
       if (orderErr) throw orderErr;
 
-      // 2. Insert or update bills table record
+      // 2. Release the associated table back to available
+      if (order && order.table_id) {
+        await supabase
+          .from("restaurant_tables")
+          .update({ status: "available" })
+          .eq("id", order.table_id);
+      }
+
+      // 3. Insert or update bills table record (link to primary orderId)
       const subtotal = items.reduce((sum, item) => sum + item.quantity * item.price_at_order, 0);
       const tax = Math.round(subtotal * 0.05); // 5% GST
       const discount = Math.round(subtotal * 0.1); // 10% Loyalty discount

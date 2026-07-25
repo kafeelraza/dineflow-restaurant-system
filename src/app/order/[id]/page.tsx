@@ -187,17 +187,29 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
               ))}
             </div>
             
-            <div className="mt-5 border-t border-[#eadfce] pt-4">
+            <div className="mt-5 border-t border-[#eadfce] pt-4 space-y-3">
               <div className="flex justify-between font-bold">
                 <span>Subtotal</span>
                 <span>{formatRs(order.total_amount)}</span>
               </div>
-              <Link
-                href={`/billing/demo?orderId=${order.id}`}
-                className="mt-5 flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--ink)] font-bold text-white"
-              >
-                <ReceiptText size={18} /> View bill
-              </Link>
+              <div className="grid grid-cols-2 gap-3">
+                {order.restaurant_tables?.table_number && (
+                  <Link
+                    href={`/menu?table=${order.restaurant_tables.table_number}`}
+                    className="flex h-12 items-center justify-center gap-2 rounded-full border border-[#d7c9b5] bg-[#fcfaf6] font-bold text-[var(--ink)] transition hover:bg-white text-xs hover:scale-[1.01]"
+                  >
+                    + Order More
+                  </Link>
+                )}
+                <Link
+                  href={`/billing/demo?orderId=${order.id}`}
+                  className={`flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--terracotta)] font-bold text-white transition hover:scale-[1.01] text-xs ${
+                    !order.restaurant_tables?.table_number ? "col-span-2" : ""
+                  }`}
+                >
+                  <ReceiptText size={16} /> View bill
+                </Link>
+              </div>
             </div>
           </Card>
         </div>
