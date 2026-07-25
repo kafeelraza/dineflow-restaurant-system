@@ -13,11 +13,116 @@ interface InventoryItem {
   reorder_threshold: number;
 }
 
+interface InventoryRowProps {
+  row: InventoryItem;
+  restockingId: string | null;
+  defaultRestockQty: number;
+  onRestock: (qty: number) => void;
+  onUpdateField: (field: "current_stock" | "reorder_threshold", val: number) => void;
+}
+
+function InventoryRow({
+  row,
+  restockingId,
+  defaultRestockQty,
+  onRestock,
+  onUpdateField,
+}: InventoryRowProps) {
+  const [stock, setStock] = useState(row.current_stock);
+  const [threshold, setThreshold] = useState(row.reorder_threshold);
+  const [qtyInput, setQtyInput] = useState(defaultRestockQty);
+
+  // Sync state with props if they change externally (e.g. from restock action or other devices)
+  useEffect(() => {
+    setStock(row.current_stock);
+  }, [row.current_stock]);
+
+  useEffect(() => {
+    setThreshold(row.reorder_threshold);
+  }, [row.reorder_threshold]);
+
+  const low = Number(stock) < Number(threshold);
+
+  const handleBlur = (field: "current_stock" | "reorder_threshold", val: number, oldVal: number) => {
+    if (val !== oldVal) {
+      onUpdateField(field, val);
+    }
+  };
+
+  return (
+    <tr className="border-b border-[#eadfce] hover:bg-[#fcfaf6] text-sm">
+      <td className="py-4 font-bold flex items-center gap-1.5 text-[var(--ink)]">
+        {low && <AlertTriangle className="text-[var(--terracotta)] shrink-0" size={16} />}
+        {row.name}
+      </td>
+      <td>
+        <div className="flex items-center gap-1.5">
+          <input
+            type="number"
+            min="0"
+            value={stock}
+            onChange={(e) => setStock(Number(e.target.value))}
+            onBlur={() => handleBlur("current_stock", stock, row.current_stock)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.currentTarget.blur();
+              }
+            }}
+            className="w-16 h-8 text-center rounded-[6px] border border-[#d7c9b5] bg-white px-1 font-mono font-bold text-xs outline-none focus:border-[var(--terracotta)]"
+          />
+          <span className="text-[10px] text-[var(--muted)] font-bold uppercase">{row.unit}</span>
+        </div>
+      </td>
+      <td>
+        <div className="flex items-center gap-1.5">
+          <input
+            type="number"
+            min="0"
+            value={threshold}
+            onChange={(e) => setThreshold(Number(e.target.value))}
+            onBlur={() => handleBlur("reorder_threshold", threshold, row.reorder_threshold)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.currentTarget.blur();
+              }
+            }}
+            className="w-16 h-8 text-center rounded-[6px] border border-[#d7c9b5] bg-white px-1 font-mono text-[var(--muted)] text-xs font-bold outline-none focus:border-[var(--terracotta)]"
+          />
+          <span className="text-[10px] text-[var(--muted)] font-bold uppercase">{row.unit}</span>
+        </div>
+      </td>
+      <td className="text-right py-2">
+        <div className="flex items-center gap-1.5 justify-end">
+          <input
+            type="number"
+            min="1"
+            value={qtyInput}
+            onChange={(e) => setQtyInput(Number(e.target.value))}
+            className="w-12 h-9 text-center rounded-[6px] border border-[#d7c9b5] bg-white px-1 text-xs font-mono font-bold outline-none focus:border-[var(--terracotta)]"
+          />
+          <button
+            disabled={restockingId === row.id}
+            onClick={() => onRestock(qtyInput)}
+            className="inline-flex h-9 items-center gap-1 rounded-full bg-[#f3eee5] px-3.5 text-xs font-bold text-[var(--ink)] hover:bg-[#eadfce] disabled:opacity-50 transition shrink-0"
+          >
+            {restockingId === row.id ? (
+              <Loader2 className="animate-spin" size={12} />
+            ) : (
+              <>
+                <Plus size={12} /> Restock
+              </>
+            )}
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 export default function InventoryPage() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [restockingId, setRestockingId] = useState<string | null>(null);
-  const [restockQuantities, setRestockQuantities] = useState<Record<string, number>>({});
 
   const fetchInventory = async () => {
     try {
@@ -113,65 +218,16 @@ export default function InventoryPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((row) => {
-                    const low = Number(row.current_stock) < Number(row.reorder_threshold);
-                    return (
-                      <tr key={row.id} className="border-b border-[#eadfce] hover:bg-[#fcfaf6]">
-                        <td className="py-4 font-bold flex items-center gap-1.5">
-                          {low && <AlertTriangle className="text-[var(--terracotta)] shrink-0" size={16} />}
-                          {row.name}
-                        </td>
-                        <td>
-                          <div className="flex items-center gap-1.5">
-                            <input
-                              type="number"
-                              min="0"
-                              value={row.current_stock}
-                              onChange={(e) => handleUpdateField(row.id, "current_stock", Number(e.target.value))}
-                              className="w-16 h-8 text-center rounded-[6px] border border-[#d7c9b5] bg-white px-1 font-mono font-bold text-xs outline-none focus:border-[var(--terracotta)]"
-                            />
-                            <span className="text-[10px] text-[var(--muted)] font-bold uppercase">{row.unit}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <div className="flex items-center gap-1.5">
-                            <input
-                              type="number"
-                              min="0"
-                              value={row.reorder_threshold}
-                              onChange={(e) => handleUpdateField(row.id, "reorder_threshold", Number(e.target.value))}
-                              className="w-16 h-8 text-center rounded-[6px] border border-[#d7c9b5] bg-white px-1 font-mono text-[var(--muted)] text-xs font-bold outline-none focus:border-[var(--terracotta)]"
-                            />
-                            <span className="text-[10px] text-[var(--muted)] font-bold uppercase">{row.unit}</span>
-                          </div>
-                        </td>
-                        <td className="text-right py-2">
-                          <div className="flex items-center gap-1.5 justify-end">
-                            <input
-                              type="number"
-                              min="1"
-                              value={restockQuantities[row.id] ?? 5}
-                              onChange={(e) => setRestockQuantities((prev) => ({ ...prev, [row.id]: Number(e.target.value) }))}
-                              className="w-12 h-9 text-center rounded-[6px] border border-[#d7c9b5] bg-white px-1 text-xs font-mono font-bold outline-none focus:border-[var(--terracotta)]"
-                            />
-                            <button
-                              disabled={restockingId === row.id}
-                              onClick={() => handleRestock(row, restockQuantities[row.id] ?? 5)}
-                              className="inline-flex h-9 items-center gap-1 rounded-full bg-[#f3eee5] px-3 text-xs font-bold text-[var(--ink)] hover:bg-[#eadfce] disabled:opacity-50 transition shrink-0"
-                            >
-                              {restockingId === row.id ? (
-                                <Loader2 className="animate-spin" size={12} />
-                              ) : (
-                                <>
-                                  <Plus size={12} /> Restock
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {items.map((row) => (
+                    <InventoryRow
+                      key={row.id}
+                      row={row}
+                      restockingId={restockingId}
+                      defaultRestockQty={5}
+                      onRestock={(qty) => handleRestock(row, qty)}
+                      onUpdateField={(field, val) => handleUpdateField(row.id, field, val)}
+                    />
+                  ))}
                 </tbody>
               </table>
             </div>
