@@ -115,8 +115,8 @@ export default function OrdersPage() {
         `)
         .neq("status", "billed");
 
-      // 4. Filter orders for staff isolation
-      if (role === "staff") {
+      // 4. Filter orders for staff isolation ONLY if stationOnly filter is enabled
+      if (role === "staff" && stationOnly) {
         // Staff should only see:
         // A. Orders directly assigned to them (for takeaway or specific task)
         // B. Dine-in orders linked to tables assigned to them
@@ -428,13 +428,13 @@ export default function OrdersPage() {
                             </div>
                           )}
 
-                          {userRole === "staff" && order.assigned_staff_id !== userId && (
+                          {!order.assigned_staff_id && (
                             <button
                               disabled={updatingId === order.id}
                               onClick={() => handleClaimOrder(order.id)}
-                              className="mt-1.5 flex h-7 w-full items-center justify-center gap-1 rounded-full border border-[#d7c9b5] bg-[#f8eadf] text-[10px] font-bold text-[var(--terracotta)] hover:bg-[var(--terracotta)] hover:text-white transition disabled:opacity-50"
+                              className="mt-2 flex h-9 w-full items-center justify-center gap-1.5 rounded-full border border-[#d7c9b5] bg-white text-xs font-bold text-[var(--terracotta)] hover:bg-[var(--terracotta)] hover:text-white transition disabled:opacity-50 shadow-sm"
                             >
-                              <UserCheck size={11} /> Claim Order & Assign Me
+                              <UserCheck size={14} /> Claim this order
                             </button>
                           )}
 

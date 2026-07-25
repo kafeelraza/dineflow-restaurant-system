@@ -7,8 +7,7 @@ export async function claimOrder(orderId: string) {
   const { error } = await supabase
     .from("orders")
     .update({ assigned_staff_id: user.id })
-    .eq("id", orderId)
-    .is("assigned_staff_id", null); // race-condition safe: only claim if unassigned
+    .eq("id", orderId);
 
   if (error) throw error;
 }
