@@ -294,7 +294,7 @@ export default function OrdersPage() {
                               order.order_type === "dine-in" ? "bg-[#eaf2e5] text-[#4f7d52]" : "bg-[#fbeead] text-[#a07012]"
                             }`}>
                               {order.order_type === "dine-in"
-                                ? `T${String(order.restaurant_tables?.table_number || "??").padStart(2, "0")}`
+                                ? `Dine-In (T${String(order.restaurant_tables?.table_number || "??").padStart(2, "0")})`
                                 : "Takeaway"}
                             </span>
                           </div>
