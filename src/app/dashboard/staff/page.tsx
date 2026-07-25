@@ -130,6 +130,25 @@ export default function StaffPage() {
     }
   };
 
+  const handleRemoveSingleTable = async (staffId: string, tableId: string) => {
+    setUpdatingId(staffId);
+    try {
+      const res = await fetch("/api/assign-staff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "assign", staffId: null, tableId }),
+      });
+      const result = await res.json();
+
+      if (!result.success) throw new Error(result.error);
+      fetchData();
+    } catch (err: any) {
+      alert("Failed to remove table assignment: " + err.message);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   return (
     <DashboardShell title="Staff coordination" subtitle="Assign wait staff to specific floor plan tables, manage workloads, and monitor table coverages.">
       {loading ? (
@@ -181,12 +200,21 @@ export default function StaffPage() {
                         Assigned Tables
                       </span>
                       <div className="flex flex-wrap gap-1.5 mt-2 min-h-8">
-                        {assignedTables.length === 0 ? (
+                        {memberTables.length === 0 ? (
                           <span className="text-xs italic text-[var(--muted)]">No tables assigned</span>
                         ) : (
-                          assignedTables.map((t) => (
-                            <span key={t} className="rounded-[4px] bg-[#f8eadf] px-2.5 py-1 text-xs font-bold text-[var(--terracotta)] border border-[#eadfce]">
-                              {t}
+                          memberTables.map((t) => (
+                            <span key={t.id} className="inline-flex items-center gap-1 rounded-[4px] bg-[#f8eadf] px-2.5 py-1 text-xs font-bold text-[var(--terracotta)] border border-[#eadfce]">
+                              T{String(t.table_number).padStart(2, "0")}
+                              <button
+                                type="button"
+                                disabled={updatingId === member.id}
+                                onClick={() => handleRemoveSingleTable(member.id, t.id)}
+                                className="ml-1 hover:text-red-700 font-extrabold text-[10px] cursor-pointer shrink-0 transition"
+                                title="Remove table coverage"
+                              >
+                                ✕
+                              </button>
                             </span>
                           ))
                         )}
@@ -223,11 +251,19 @@ export default function StaffPage() {
                       }
                       className="h-10 flex-1 rounded-[8px] border border-[#d7c9b5] bg-[#fcfaf6] px-2 text-xs font-bold outline-none focus:border-[var(--terracotta)] capitalize"
                     >
-                      {tablesList.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          Table T{String(t.table_number).padStart(2, "0")}
-                        </option>
-                      ))}
+                      {tablesList.map((t) => {
+                        const assignedTo = staffList.find((s) => s.id === t.assigned_staff_id);
+                        const suffix = assignedTo
+                          ? assignedTo.id === member.id
+                            ? " (Assigned here)"
+                            : ` (Covered by ${assignedTo.full_name.split(" ")[0]})`
+                          : "";
+                        return (
+                          <option key={t.id} value={t.id} disabled={t.assigned_staff_id === member.id}>
+                            Table T{String(t.table_number).padStart(2, "0")}{suffix}
+                          </option>
+                        );
+                      })}
                     </select>
 
                     <button
