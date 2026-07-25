@@ -47,3 +47,28 @@ img {
   background: #f5d7c3;
   color: var(--ink);
 }
+
+/* Premium Custom Styled Forms: Select Dropdowns & Date/Time inputs */
+select {
+  appearance: none !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23c1622e' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 16px !important;
+  padding-right: 36px !important;
+}
+
+/* Custom styling for native date/time pickers indicator to match Terracotta logo styling */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(41%) sepia(50%) saturate(795%) hue-rotate(338deg) brightness(88%) contrast(90%); /* matches #c1622e */
+}
+
+/* Base custom styles for premium select options */
+select option {
+  background-color: #fcfaf6;
+  color: var(--ink);
+  font-family: inherit;
+  font-weight: 600;
+}

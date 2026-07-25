@@ -52,7 +52,7 @@ export function AppNav() {
         <div className="hidden items-center gap-7 text-sm font-semibold text-[var(--muted)] md:flex">
           <Link href="/menu" className="hover:text-[var(--ink)]">Menu</Link>
           <Link href="/reserve" className="hover:text-[var(--ink)]">Reserve</Link>
-          <Link href="/order/demo" className="hover:text-[var(--ink)]">Track Order</Link>
+          <Link href="/order" className="hover:text-[var(--ink)]">Track Order</Link>
           <Link href="/dashboard" className="hover:text-[var(--ink)]">Dashboard</Link>
         </div>
         <div className="flex items-center gap-3">

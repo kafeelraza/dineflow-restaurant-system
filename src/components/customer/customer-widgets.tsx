@@ -75,6 +75,8 @@ export function MenuExperience() {
           }
         } else {
           // Default selection fallback if no query param is provided
+          setOrderType("takeaway");
+          setPreselected(false);
           if (loadedTables.length > 0) {
             setSelectedTableId(loadedTables[0].id);
             setSelectedTableNumber(loadedTables[0].table_number);
@@ -145,7 +147,7 @@ export function MenuExperience() {
     };
 
     fetchMenuData();
-  }, []);
+  }, [tableParam]);
 
   const filtered = active === "Chef picks" ? menuItems : menuItems.filter((item) => item.category === active);
   const cartLines = menuItems.filter((item) => cart[item.id]);
