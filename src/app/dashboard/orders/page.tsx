@@ -209,6 +209,23 @@ export default function OrdersPage() {
     }
   };
 
+  const handleClaimOrder = async (orderId: string) => {
+    try {
+      setUpdatingId(orderId);
+      const { error } = await supabase
+        .from("orders")
+        .update({ assigned_staff_id: userId })
+        .eq("id", orderId);
+
+      if (error) throw error;
+      fetchOrdersData();
+    } catch (err: any) {
+      alert("Failed to claim order: " + err.message);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const handleSettleAndArchive = (orderId: string) => {
     setSettlingOrderId(orderId);
   };
@@ -413,6 +430,16 @@ export default function OrdersPage() {
                                 {serverName || "Unassigned"}
                               </span>
                             </div>
+                          )}
+
+                          {userRole === "staff" && order.assigned_staff_id !== userId && (
+                            <button
+                              disabled={updatingId === order.id}
+                              onClick={() => handleClaimOrder(order.id)}
+                              className="mt-1.5 flex h-7 w-full items-center justify-center gap-1 rounded-full border border-[#d7c9b5] bg-[#f8eadf] text-[10px] font-bold text-[var(--terracotta)] hover:bg-[var(--terracotta)] hover:text-white transition disabled:opacity-50"
+                            >
+                              <UserCheck size={11} /> Claim Order & Assign Me
+                            </button>
                           )}
 
                           {/* Time and Price information */}

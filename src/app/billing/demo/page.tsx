@@ -44,19 +44,35 @@ function BillingContent() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const fetchBillData = async () => {
-    if (!orderId) {
-      setError("No Order ID provided.");
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
+      let targetId: string = orderId || "";
+
+      if (!targetId) {
+        // Fallback: Fetch the most recent active order from the database
+        const { data: latestOrder } = await supabase
+          .from("orders")
+          .select("id")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (latestOrder) {
+          targetId = latestOrder.id;
+        }
+      }
+
+      if (!targetId) {
+        setError("No active order found to generate bill receipt.");
+        setLoading(false);
+        return;
+      }
+
       // 1. Fetch order details
       const { data: orderData, error: orderErr } = await supabase
         .from("orders")
         .select("id, status, total_amount, guest_name, guest_phone, table_id, restaurant_tables(table_number)")
-        .eq("id", orderId)
+        .eq("id", targetId)
         .single();
 
       if (orderErr) throw orderErr;
@@ -66,7 +82,7 @@ function BillingContent() {
       }
 
       // Consolidate active sibling orders for this table if it is Dine-In
-      let orderIds = [orderId];
+      let orderIds: string[] = [targetId];
       if (orderData.table_id) {
         const { data: siblingOrders } = await supabase
           .from("orders")
@@ -75,9 +91,9 @@ function BillingContent() {
           .neq("status", "billed");
 
         if (siblingOrders && siblingOrders.length > 0) {
-          const activeIds = siblingOrders.map((o) => o.id);
+          const activeIds = siblingOrders.map((o) => o.id).filter(Boolean) as string[];
           // Only consolidate if our current order is part of the active session
-          if (activeIds.includes(orderId)) {
+          if (activeIds.includes(targetId)) {
             orderIds = activeIds;
           }
         }

@@ -182,50 +182,155 @@ create table public.notifications (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Turn on RLS for other tables
-alter table public.restaurant_settings enable row level security;
-alter table public.menu_categories enable row level security;
+-- ============================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- ============================================
+
+-- Helper function to safely check a user's role
+-- (avoids infinite recursion if we queried "profiles" directly inside its own policy)
+create or replace function public.get_my_role()
+returns text
+language sql
+security definer
+stable
+as $$
+  select role from public.profiles where id = auth.uid();
+$$;
+
+-- ---------- PROFILES ----------
+alter table public.profiles enable row level security;
+
+create policy "Users can view their own profile"
+  on public.profiles for select
+  using (auth.uid() = id);
+
+create policy "Admins and staff can view all profiles"
+  on public.profiles for select
+  using (public.get_my_role() in ('admin', 'staff'));
+
+create policy "Users can update their own profile"
+  on public.profiles for update
+  using (auth.uid() = id);
+
+create policy "New users can insert their own profile"
+  on public.profiles for insert
+  with check (auth.uid() = id);
+
+-- ---------- MENU ITEMS ----------
 alter table public.menu_items enable row level security;
+
+create policy "Anyone can view menu items"
+  on public.menu_items for select
+  using (true); -- menu must be public, even for guests without login
+
+create policy "Admins can manage menu items"
+  on public.menu_items for insert
+  with check (public.get_my_role() = 'admin');
+
+create policy "Admins can update menu items"
+  on public.menu_items for update
+  using (public.get_my_role() = 'admin');
+
+create policy "Admins can delete menu items"
+  on public.menu_items for delete
+  using (public.get_my_role() = 'admin');
+
+-- ---------- RESTAURANT TABLES ----------
 alter table public.restaurant_tables enable row level security;
+
+create policy "Anyone can view table availability"
+  on public.restaurant_tables for select
+  using (true); -- needed for guest reservation/availability screens
+
+create policy "Staff and admins can update table status"
+  on public.restaurant_tables for update
+  using (public.get_my_role() in ('admin', 'staff'));
+
+create policy "Admins can manage tables"
+  on public.restaurant_tables for insert
+  with check (public.get_my_role() = 'admin');
+
+-- ---------- RESERVATIONS ----------
 alter table public.reservations enable row level security;
+
+create policy "Anyone can create a reservation"
+  on public.reservations for insert
+  with check (true); -- guests can reserve without logging in
+
+create policy "Customers can view their own reservations"
+  on public.reservations for select
+  using (auth.uid() = customer_id);
+
+create policy "Staff and admins can view all reservations"
+  on public.reservations for select
+  using (public.get_my_role() in ('admin', 'staff'));
+
+create policy "Staff and admins can update reservations"
+  on public.reservations for update
+  using (public.get_my_role() in ('admin', 'staff'));
+
+-- ---------- ORDERS ----------
 alter table public.orders enable row level security;
+
+create policy "Anyone can place an order"
+  on public.orders for insert
+  with check (true); -- guest checkout support (guest_name/guest_phone flow)
+
+create policy "Customers can view their own orders"
+  on public.orders for select
+  using (true); -- allows guest customer tracking by order ID
+
+create policy "Staff and admins can view all orders"
+  on public.orders for select
+  using (public.get_my_role() in ('admin', 'staff'));
+
+create policy "Staff and admins can update orders"
+  on public.orders for update
+  using (public.get_my_role() in ('admin', 'staff'));
+
+-- ---------- ORDER ITEMS ----------
 alter table public.order_items enable row level security;
+
+create policy "Anyone can insert order items"
+  on public.order_items for insert
+  with check (true); -- tied to order creation, same guest-checkout logic
+
+create policy "Customers can view their own order items"
+  on public.order_items for select
+  using (true); -- allows guest customer tracking
+
+create policy "Staff and admins can view all order items"
+  on public.order_items for select
+  using (public.get_my_role() in ('admin', 'staff'));
+
+-- ---------- INVENTORY ----------
 alter table public.inventory_items enable row level security;
-alter table public.staff_shifts enable row level security;
-alter table public.bills enable row level security;
-alter table public.ai_insights enable row level security;
+
+create policy "Staff and admins can view inventory"
+  on public.inventory_items for select
+  using (public.get_my_role() in ('admin', 'staff'));
+
+create policy "Staff and admins can update inventory"
+  on public.inventory_items for update
+  using (public.get_my_role() in ('admin', 'staff'));
+
+create policy "Admins can insert inventory items"
+  on public.inventory_items for insert
+  with check (public.get_my_role() = 'admin');
+
+-- ---------- NOTIFICATIONS ----------
 alter table public.notifications enable row level security;
 
--- Setup basic read-for-all policies
-create policy "Allow read access to anyone" on public.restaurant_settings for select using (true);
-create policy "Allow read access to anyone" on public.menu_categories for select using (true);
-create policy "Allow read access to anyone" on public.menu_items for select using (true);
-create policy "Allow read access to anyone" on public.restaurant_tables for select using (true);
-create policy "Allow read access to anyone" on public.reservations for select using (true);
-create policy "Allow read access to anyone" on public.orders for select using (true);
-create policy "Allow read access to anyone" on public.order_items for select using (true);
-create policy "Allow read access to anyone" on public.inventory_items for select using (true);
-create policy "Allow read access to anyone" on public.bills for select using (true);
-create policy "Allow read access to anyone" on public.ai_insights for select using (true);
-create policy "Allow read access to anyone" on public.notifications for select using (true);
+create policy "Staff and admins can view notifications"
+  on public.notifications for select
+  using (public.get_my_role() in ('admin', 'staff'));
 
--- Allow authenticated writes for staff and admins
-create policy "Allow write access to staff/admins" on public.menu_categories for all using (true);
-create policy "Allow write access to staff/admins" on public.menu_items for all using (true);
-create policy "Allow write access to staff/admins" on public.restaurant_tables for all using (true);
-create policy "Allow write access to staff/admins" on public.inventory_items for all using (true);
-create policy "Allow write access to staff/admins" on public.staff_shifts for all using (true);
-create policy "Allow write access to staff/admins" on public.bills for all using (true);
-create policy "Allow write access to staff/admins" on public.ai_insights for all using (true);
-create policy "Allow write access to staff/admins" on public.notifications for all using (true);
+create policy "System can insert notifications"
+  on public.notifications for insert
+  with check (true); -- backend/trigger-generated, not user-facing writes
 
--- Client orders policies
-create policy "Allow anyone to place an order" on public.orders for insert with check (true);
-create policy "Allow anyone to update orders" on public.orders for update using (true);
+create policy "Staff and admins can update notifications"
+  on public.notifications for update
+  using (public.get_my_role() in ('admin', 'staff'));
 
-create policy "Allow anyone to manage order items" on public.order_items for all using (true);
-
--- Client reservations policies
-create policy "Allow anyone to book a reservation" on public.reservations for insert with check (true);
-create policy "Allow anyone to update reservations" on public.reservations for update using (true);
 
