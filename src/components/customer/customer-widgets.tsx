@@ -74,13 +74,11 @@ export function MenuExperience() {
             }
           }
         } else {
-          // Default selection fallback if no query param is provided
+          // Default selection fallback if no query param is provided: Takeaway order with NO table assigned
           setOrderType("takeaway");
           setPreselected(false);
-          if (loadedTables.length > 0) {
-            setSelectedTableId(loadedTables[0].id);
-            setSelectedTableNumber(loadedTables[0].table_number);
-          }
+          setSelectedTableId(null);
+          setSelectedTableNumber(null);
         }
 
         // Fetch Categories

@@ -29,7 +29,10 @@ export default function OrderRootPage() {
 
   const handleTrackOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchName.trim()) return;
+    const queryTerm = searchName.trim().toLowerCase();
+    const orderIdQuery = searchOrderId.trim().toLowerCase();
+
+    if (!queryTerm && !orderIdQuery) return;
 
     setSearching(true);
     setSearchError(null);
@@ -44,15 +47,28 @@ export default function OrderRootPage() {
 
       if (error) throw error;
 
-      const matched = (data || []).filter((o) => {
-        const nameMatches = o.guest_name?.toLowerCase().trim() === searchName.trim().toLowerCase();
-        if (!nameMatches) return false;
+      // Extract numeric table query if user typed "2", "Table 2", "T2", "T02"
+      const cleanTableNum = Number(queryTerm.replace(/\D/g, ""));
+      const isTableQuery = !isNaN(cleanTableNum) && cleanTableNum > 0;
 
-        if (searchOrderId.trim()) {
-          const cleanSearchId = searchOrderId.trim().toLowerCase();
-          return o.id.toLowerCase().startsWith(cleanSearchId);
+      const matched = (data || []).filter((o) => {
+        // 1. Guest name check
+        const nameMatches = queryTerm && o.guest_name?.toLowerCase().includes(queryTerm);
+
+        // 2. Table number check (e.g. searching "2" or "Table 2")
+        const tableObj: any = Array.isArray(o.restaurant_tables) ? o.restaurant_tables[0] : o.restaurant_tables;
+        const tableNum = tableObj?.table_number;
+        const tableMatches = isTableQuery && tableNum === cleanTableNum;
+
+        // 3. Order ID check
+        const idMatches = orderIdQuery && o.id.toLowerCase().startsWith(orderIdQuery);
+        const termIsId = queryTerm && o.id.toLowerCase().startsWith(queryTerm);
+
+        if (orderIdQuery) {
+          return (nameMatches || tableMatches) && idMatches;
         }
-        return true;
+
+        return nameMatches || tableMatches || termIsId;
       });
 
       if (matched.length === 1) {
@@ -61,7 +77,7 @@ export default function OrderRootPage() {
       } else if (matched.length > 1) {
         setFoundOrders(matched);
       } else {
-        setSearchError("No active order found matching this guest name.");
+        setSearchError("No active order found matching this guest name or table number.");
       }
     } catch (err: any) {
       setSearchError(err.message || "Failed to search order.");
@@ -112,12 +128,11 @@ export default function OrderRootPage() {
         <form onSubmit={handleTrackOrder} className="bg-white border border-[#eadfce] rounded-[12px] p-6 shadow-sm space-y-4">
           <div>
             <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1.5">
-              Guest Name (Required)
+              Guest Name or Table Number
             </label>
             <input
               type="text"
-              required
-              placeholder="e.g. Rahul Sharma"
+              placeholder="e.g. Rahul Sharma or Table 2"
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
               className="h-11 w-full rounded-[8px] border border-[#d7c9b5] bg-[#fcfaf6] px-3 text-sm outline-none focus:border-[var(--terracotta)] font-semibold text-[var(--ink)]"
@@ -167,7 +182,8 @@ export default function OrderRootPage() {
               {foundOrders.map((ord) => {
                 const timeStr = new Date(ord.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 const idTag = ord.id.slice(0, 4).toUpperCase();
-                const tableNum = ord.restaurant_tables?.table_number;
+                const tableObj: any = Array.isArray(ord.restaurant_tables) ? ord.restaurant_tables[0] : ord.restaurant_tables;
+                const tableNum = tableObj?.table_number;
                 return (
                   <div
                     key={ord.id}
