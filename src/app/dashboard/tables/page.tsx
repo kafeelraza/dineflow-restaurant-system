@@ -23,6 +23,7 @@ interface QueueItem {
   name: string;
   party_size: number;
   reserved_at: string;
+  table_id: string | null;
 }
 
 export default function TablesPage() {
@@ -44,7 +45,7 @@ export default function TablesPage() {
       // 2. Fetch queue from confirmed reservations
       const { data: queueData } = await supabase
         .from("reservations")
-        .select("id, name, party_size, reserved_at")
+        .select("id, name, party_size, reserved_at, table_id")
         .in("status", ["pending", "confirmed"])
         .order("reserved_at", { ascending: true });
 
@@ -92,6 +93,30 @@ export default function TablesPage() {
     }
   };
 
+  const handleReleaseTable = async (tableId: string, reservationId: string) => {
+    try {
+      // 1. Mark reservation as completed
+      const { error: resError } = await supabase
+        .from("reservations")
+        .update({ status: "completed" })
+        .eq("id", reservationId);
+
+      if (resError) throw resError;
+
+      // 2. Set table status back to available
+      const { error: tableError } = await supabase
+        .from("restaurant_tables")
+        .update({ status: "available" })
+        .eq("id", tableId);
+
+      if (tableError) throw tableError;
+
+      fetchData(); // Reload assignments and reservations list
+    } catch (err: any) {
+      alert("Failed to release table: " + err.message);
+    }
+  };
+
   return (
     <DashboardShell title="Tables and queue" subtitle="Visual floor-plan grid for seating, reservation, cleaning, and occupancy management.">
       {loading ? (
@@ -101,39 +126,86 @@ export default function TablesPage() {
       ) : (
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {localTables.map((table) => (
-              <button
-                key={table.id}
-                onClick={() => handleCycleStatus(table)}
-                className={`rounded-[8px] p-5 text-left font-bold transition hover:scale-[1.02] border border-[#eadfce] ${
-                  table.status === "available" ? "bg-[#eaf2e5] text-[#4f7d52]" :
-                  table.status === "reserved" ? "bg-[#fbf0cf] text-[#a07012]" :
-                  table.status === "cleaning" ? "bg-[#ece7df] text-[#8a7f71]" :
-                  "bg-[#f8ddd5] text-[#b24428]"
-                }`}
-              >
-                <div className="flex justify-between items-start w-full">
-                  <span className="block text-2xl">T{String(table.table_number).padStart(2, "0")}</span>
-                  <span
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedQrTable(table);
-                    }}
-                    className="p-1 rounded-full hover:bg-black/10 transition text-inherit cursor-pointer"
-                    title="View QR Code"
-                  >
-                    <QrCode size={18} />
+            {localTables.map((table) => {
+              const now = new Date();
+              const activeRes = queue.find((res) => {
+                if (res.table_id !== table.id) return false;
+
+                const parts = res.name.split(" | ");
+                const durationHours = parts[1] ? parseInt(parts[1]) : 2;
+
+                const resStart = new Date(res.reserved_at);
+                const resEnd = new Date(resStart.getTime() + durationHours * 60 * 60 * 1000);
+
+                return now >= resStart && now < resEnd;
+              });
+
+              let guestName = "";
+              let endTimeString = "";
+              if (activeRes) {
+                guestName = activeRes.name.split(" | ")[0];
+                const resStart = new Date(activeRes.reserved_at);
+                const parts = activeRes.name.split(" | ");
+                const durationHours = parts[1] ? parseInt(parts[1]) : 2;
+                const resEnd = new Date(resStart.getTime() + durationHours * 60 * 60 * 1000);
+                endTimeString = resEnd.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+              }
+
+              return (
+                <button
+                  key={table.id}
+                  onClick={() => handleCycleStatus(table)}
+                  className={`rounded-[8px] p-5 text-left font-bold transition border border-[#eadfce] ${
+                    table.status === "available" && !activeRes ? "bg-[#eaf2e5] text-[#4f7d52]" :
+                    activeRes || table.status === "reserved" ? "bg-[#fbf0cf] text-[#a07012]" :
+                    table.status === "cleaning" ? "bg-[#ece7df] text-[#8a7f71]" :
+                    "bg-[#f8ddd5] text-[#b24428]"
+                  }`}
+                >
+                  <div className="flex justify-between items-start w-full">
+                    <span className="block text-2xl">T{String(table.table_number).padStart(2, "0")}</span>
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedQrTable(table);
+                      }}
+                      className="p-1 rounded-full hover:bg-black/10 transition text-inherit cursor-pointer"
+                      title="View QR Code"
+                    >
+                      <QrCode size={18} />
+                    </span>
+                  </div>
+                  <span className="capitalize text-sm block">
+                    {activeRes ? `Booked` : table.status}
                   </span>
-                </div>
-                <span className="capitalize">{table.status}</span>
-                <span className="mt-3 block text-xs text-[var(--muted)]">Seats {table.capacity}</span>
-                {table.profiles?.full_name && (
-                  <span className="mt-1.5 block text-[10px] uppercase tracking-wider font-bold opacity-80 text-[var(--terracotta)] truncate">
-                    Server: {table.profiles.full_name}
+                  <span className="mt-2 block text-xs text-[var(--muted)]">
+                    {activeRes ? `Free after ${endTimeString}` : `Seats ${table.capacity}`}
                   </span>
-                )}
-              </button>
-            ))}
+                  {activeRes && (
+                    <span className="block text-[10px] text-[var(--muted)] font-normal truncate mt-1">
+                      Guest: {guestName}
+                    </span>
+                  )}
+                  {table.profiles?.full_name && (
+                    <span className="mt-1.5 block text-[10px] uppercase tracking-wider font-bold opacity-80 text-[var(--terracotta)] truncate">
+                      Server: {table.profiles.full_name}
+                    </span>
+                  )}
+                  {activeRes && (
+                    <span
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        await handleReleaseTable(table.id, activeRes.id);
+                      }}
+                      className="mt-2.5 block text-center text-[10px] uppercase font-extrabold bg-[#f8ddd5] text-[#b24428] py-1.5 px-2 rounded-[4px] hover:bg-[#f8ddd5]/80 transition cursor-pointer"
+                      title="Release reservation early"
+                    >
+                      Release Table
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
           
           <aside className="rounded-[8px] border border-[#eadfce] bg-white p-5">
