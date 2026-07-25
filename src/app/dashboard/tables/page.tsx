@@ -209,17 +209,39 @@ export default function TablesPage() {
                       Server: {table.profiles.full_name}
                     </span>
                   )}
-                  {activeRes && (
-                    <span
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        await handleReleaseTable(table.id, activeRes.id);
-                      }}
-                      className="mt-2.5 block text-center text-[10px] uppercase font-extrabold bg-[#f8ddd5] text-[#b24428] py-1.5 px-2 rounded-[4px] hover:bg-[#f8ddd5]/80 transition cursor-pointer"
-                      title="Release reservation early"
-                    >
-                      Release Table
-                    </span>
+                  {/* Today's Bookings List with Free/Cancel trigger links */}
+                  {queue.filter((r) => r.table_id === table.id).length > 0 && (
+                    <div className="mt-3.5 space-y-1 pt-2 border-t border-[#eadfce]/65 w-full">
+                      <p className="text-[9px] uppercase tracking-wider text-[var(--muted)] font-extrabold mb-1">Bookings Today:</p>
+                      {queue
+                        .filter((r) => r.table_id === table.id)
+                        .map((res) => {
+                          const resGuestName = res.name.split(" | ")[0];
+                          const resStart = new Date(res.reserved_at);
+                          const timeString = resStart.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+                          return (
+                            <div
+                              key={res.id}
+                              className="p-1.5 rounded bg-white/70 border border-[#eadfce]/65 flex justify-between items-center text-[10px] text-[var(--ink)] font-normal gap-1"
+                            >
+                              <span className="truncate max-w-[85px] font-semibold text-[var(--ink)]">
+                                {resGuestName} ({timeString})
+                              </span>
+                              <span
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  await handleReleaseTable(table.id, res.id);
+                                }}
+                                className="font-extrabold uppercase tracking-wider text-[#b24428] hover:underline cursor-pointer shrink-0 ml-1"
+                                title="Free table / Complete reservation"
+                              >
+                                Free
+                              </span>
+                            </div>
+                          );
+                        })}
+                    </div>
                   )}
                 </button>
               );
