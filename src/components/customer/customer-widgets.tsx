@@ -147,6 +147,12 @@ export function MenuExperience() {
     };
 
     fetchMenuData();
+
+    // Pre-fill saved guest details from local storage
+    const savedName = localStorage.getItem("dineflow_guest_name");
+    const savedPhone = localStorage.getItem("dineflow_guest_phone");
+    if (savedName) setGuestName(savedName);
+    if (savedPhone) setGuestPhone(savedPhone);
   }, [tableParam]);
 
   const filtered = active === "Chef picks" ? menuItems : menuItems.filter((item) => item.category === active);
@@ -207,7 +213,11 @@ export function MenuExperience() {
         const { error: itemsErr } = await supabase.from("order_items").insert(orderItemsData);
         if (itemsErr) throw itemsErr;
 
-        // Reset cart and redirect
+        // Save guest details to local storage to eliminate repetitive typing on subsequent orders
+        localStorage.setItem("dineflow_guest_name", guestName.trim());
+        if (guestPhone.trim()) {
+          localStorage.setItem("dineflow_guest_phone", guestPhone.trim());
+        }
         localStorage.setItem("dineflow_last_order_id", order.id);
         setCart({});
         setCartOpen(false);

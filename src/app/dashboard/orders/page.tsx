@@ -57,6 +57,7 @@ export default function OrdersPage() {
   const [assigningMap, setAssigningMap] = useState<Record<string, string>>({});
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [settlingOrderId, setSettlingOrderId] = useState<string | null>(null);
+  const [stationOnly, setStationOnly] = useState(false);
 
   const fetchOrdersData = async () => {
     try {
@@ -257,20 +258,58 @@ export default function OrdersPage() {
           <Loader2 className="animate-spin text-[var(--terracotta)]" size={36} />
         </div>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-5">
-          {columns.map((column) => (
-            <section key={column} className="rounded-[8px] border border-[#eadfce] bg-white p-4 flex flex-col min-h-[70vh]">
-              <div className="flex items-center justify-between border-b border-[#eadfce] pb-3 mb-4">
-                <h2 className="font-serif text-xl font-bold capitalize">{column}</h2>
-                <span className="rounded-full bg-[#f3eee5] px-2 py-0.5 text-xs font-mono font-bold text-[var(--muted)]">
-                  {localOrders.filter((o) => o.status === column).length}
-                </span>
+        <div className="space-y-4">
+          {userRole === "staff" && (
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-[#eadfce] p-3.5 rounded-[8px] shadow-sm">
+              <span className="text-xs font-extrabold text-[var(--muted)] uppercase tracking-wider">Quick Station Filter:</span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStationOnly(false)}
+                  className={`h-9 px-4 rounded-full text-xs font-bold transition ${
+                    !stationOnly 
+                      ? "bg-[var(--ink)] text-white" 
+                      : "border border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
+                  }`}
+                >
+                  All Kitchen Orders ({localOrders.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStationOnly(true)}
+                  className={`h-9 px-4 rounded-full text-xs font-bold transition ${
+                    stationOnly 
+                      ? "bg-[var(--terracotta)] text-white" 
+                      : "border border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
+                  }`}
+                >
+                  🎯 My Assigned Tables Only ({
+                    localOrders.filter((o) => o.assigned_staff_id === userId || o.restaurant_tables?.assigned_staff_id === userId).length
+                  })
+                </button>
               </div>
+            </div>
+          )}
 
-              <div className="space-y-3 flex-1 overflow-y-auto max-h-[60vh] pr-1">
-                {localOrders
-                  .filter((order) => order.status === column)
-                  .map((order) => {
+          <div className="grid gap-4 xl:grid-cols-5">
+            {columns.map((column) => {
+              const displayedOrders = stationOnly 
+                ? localOrders.filter((o) => o.assigned_staff_id === userId || o.restaurant_tables?.assigned_staff_id === userId)
+                : localOrders;
+
+              return (
+                <section key={column} className="rounded-[8px] border border-[#eadfce] bg-white p-4 flex flex-col min-h-[70vh]">
+                  <div className="flex items-center justify-between border-b border-[#eadfce] pb-3 mb-4">
+                    <h2 className="font-serif text-xl font-bold capitalize">{column}</h2>
+                    <span className="rounded-full bg-[#f3eee5] px-2 py-0.5 text-xs font-mono font-bold text-[var(--muted)]">
+                      {displayedOrders.filter((o) => o.status === column).length}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 flex-1 overflow-y-auto max-h-[60vh] pr-1">
+                    {displayedOrders
+                      .filter((order) => order.status === column)
+                      .map((order) => {
                     const formattedItems = order.order_items
                       .map((oi) => `${oi.menu_items?.name || "Item"} x${oi.quantity}`)
                       .join(", ");
@@ -398,8 +437,10 @@ export default function OrdersPage() {
                   })}
               </div>
             </section>
-          ))}
+          );
+        })}
         </div>
+      </div>
       )}
       {settlingOrderId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">

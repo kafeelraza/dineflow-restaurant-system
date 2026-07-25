@@ -176,6 +176,29 @@ export default function InventoryPage() {
     }
   };
 
+  const [restockingAll, setRestockingAll] = useState(false);
+
+  const handleRestockAllLow = async () => {
+    const lowItems = items.filter((i) => Number(i.current_stock) < Number(i.reorder_threshold));
+    if (lowItems.length === 0) return;
+    setRestockingAll(true);
+
+    try {
+      for (const item of lowItems) {
+        const newStock = Number(item.reorder_threshold) + 10;
+        await supabase
+          .from("inventory_items")
+          .update({ current_stock: newStock, last_restocked: new Date().toISOString() })
+          .eq("id", item.id);
+      }
+      fetchInventory();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setRestockingAll(false);
+    }
+  };
+
   const handleUpdateField = async (itemId: string, field: "current_stock" | "reorder_threshold", val: number) => {
     try {
       // Optimistic update
@@ -203,8 +226,21 @@ export default function InventoryPage() {
       ) : (
         <div className="grid gap-6 xl:grid-cols-[1fr_0.85fr]">
           <div className="rounded-[8px] border border-[#eadfce] bg-white p-5">
-            <div className="mb-5 flex items-center justify-between">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-serif text-2xl font-bold">Stock table</h2>
+              {items.some((i) => Number(i.current_stock) < Number(i.reorder_threshold)) && (
+                <button
+                  disabled={restockingAll}
+                  onClick={handleRestockAllLow}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[var(--terracotta)] px-4 text-xs font-bold text-white transition hover:scale-[1.01] disabled:opacity-50"
+                >
+                  {restockingAll ? (
+                    <Loader2 className="animate-spin" size={12} />
+                  ) : (
+                    <>⚡ Restock All Low (+10)</>
+                  )}
+                </button>
+              )}
             </div>
             
             <div className="overflow-x-auto">
