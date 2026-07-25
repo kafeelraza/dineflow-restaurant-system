@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, Loader2, Trash2 } from "lucide-react";
+import { Bell, Loader2, Trash2, ArrowLeft } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/dashboard-widgets";
 import { Card } from "@/components/ui/brand";
 import { supabase } from "@/lib/supabaseClient";
+import Link from "next/link";
 
 interface DbNotification {
   id: string;
@@ -68,16 +69,22 @@ export default function NotificationsPage() {
 
   return (
     <DashboardShell title="Notifications center" subtitle="Real-time operational alerts, customer checkouts, and system logs.">
-      {notificationsList.length > 0 && (
-        <div className="mb-6 flex justify-end">
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--muted)] hover:text-[var(--ink)] transition"
+        >
+          <ArrowLeft size={13} /> Back to dashboard
+        </Link>
+        {notificationsList.length > 0 && (
           <button
             onClick={handleClearAll}
             className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full border border-[#d7c9b5] bg-white px-4 text-xs font-bold text-[#b24428] hover:bg-[#f8ddd5]/20 transition shrink-0"
           >
             <Trash2 size={13} /> Clear All Alerts
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {loading ? (
         <div className="flex h-[40vh] items-center justify-center">
