@@ -308,64 +308,32 @@ export function MenuExperience() {
             </div>
             <div className="border-t border-[#eadfce] pt-4 space-y-3">
               {/* Dining Option Selectors */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">Order Type</label>
-                  <select
-                    disabled={preselected}
-                    value={orderType}
-                    onChange={(e) => {
-                      const val = e.target.value as "dine-in" | "takeaway";
-                      setOrderType(val);
-                      if (val === "takeaway") {
-                        setSelectedTableId(null);
-                        setSelectedTableNumber(null);
-                      } else if (tablesList.length > 0) {
-                        setSelectedTableId(tablesList[0].id);
-                        setSelectedTableNumber(tablesList[0].table_number);
-                      }
-                    }}
-                    className="h-10 w-full rounded-[8px] border border-[#d7c9b5] bg-white px-2 text-xs font-bold outline-none disabled:opacity-75"
-                  >
-                    <option value="takeaway">Takeaway</option>
-                    <option value="dine-in">Dine-In</option>
-                  </select>
-                </div>
-
-                {orderType === "dine-in" && (
+              {preselected ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">Order Mode</label>
+                    <div className="h-10 w-full rounded-[8px] border border-[#d7c9b5] bg-[#fcfaf6] px-3 flex items-center text-xs font-bold text-[var(--terracotta)]">
+                      Dine-In
+                    </div>
+                  </div>
                   <div>
                     <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">Table Station</label>
-                    {preselected ? (
-                      <div className="h-10 w-full rounded-[8px] border border-[#d7c9b5] bg-[#fcfaf6] px-3 flex items-center text-xs font-bold text-[var(--terracotta)] font-mono">
-                        T{String(selectedTableNumber).padStart(2, "0")} (Pre-booked)
-                      </div>
-                    ) : (
-                      <select
-                        value={selectedTableId || ""}
-                        onChange={(e) => {
-                          const matched = tablesList.find((t) => t.id === e.target.value);
-                          if (matched) {
-                            setSelectedTableId(matched.id);
-                            setSelectedTableNumber(matched.table_number);
-                          }
-                        }}
-                        className="h-10 w-full rounded-[8px] border border-[#d7c9b5] bg-white px-2 text-xs font-bold outline-none capitalize"
-                      >
-                        {tablesList.filter((t) => t.status === "available" || t.status === "cleaning").length === 0 ? (
-                          <option value="">No tables available</option>
-                        ) : (
-                          tablesList
-                            .filter((t) => t.status === "available" || t.status === "cleaning")
-                            .map((t) => (
-                              <option key={t.id} value={t.id}>
-                                Table T{String(t.table_number).padStart(2, "0")}
-                              </option>
-                            ))
-                        )}</select>
-                    )}
+                    <div className="h-10 w-full rounded-[8px] border border-[#d7c9b5] bg-[#fcfaf6] px-3 flex items-center text-xs font-bold text-[var(--terracotta)] font-mono">
+                      T{String(selectedTableNumber).padStart(2, "0")} (Reserved)
+                    </div>
                   </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">Order Mode</label>
+                  <div className="h-10 w-full rounded-[8px] border border-[#d7c9b5] bg-[#fcfaf6] px-3 flex items-center text-xs font-bold text-[var(--ink)]">
+                    Takeaway Order
+                  </div>
+                  <p className="text-[10px] text-[var(--muted)] mt-1.5 leading-normal">
+                    * Dine-In ordering is only available by scanning a table QR code or proceeding from a table reservation.
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">Your Name</label>
