@@ -182,6 +182,16 @@ export default function OrdersPage() {
         .eq("id", orderId);
 
       if (error) throw error;
+
+      if (staffId) {
+        const idTag = orderId.slice(0, 4).toUpperCase();
+        await supabase.from("notifications").insert({
+          user_id: staffId,
+          message: `👤 Order #${idTag} has been assigned to you by Manager.`,
+          is_read: false,
+        });
+      }
+
       fetchOrdersData();
     } catch (err: any) {
       alert("Failed to assign staff: " + err.message);

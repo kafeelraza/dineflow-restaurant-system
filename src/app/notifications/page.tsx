@@ -20,13 +20,46 @@ export default function NotificationsPage() {
 
   const fetchNotifications = async () => {
     try {
+      // Fetch authenticated user profile
+      const { data: { user } } = await supabase.auth.getUser();
+
+      let userRole = "customer";
+      let userId = "";
+
+      if (user) {
+        userId = user.id;
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        if (profile) userRole = profile.role;
+      }
+
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setNotificationsList((data as DbNotification[]) || []);
+      let rawList = (data as DbNotification[]) || [];
+
+      // If staff role, filter list to ONLY show assignments directed to them or mentioning their assignment
+      if (userRole === "staff") {
+        rawList = rawList.filter((note) => {
+          const isTargetedToUser = (note as any).user_id === userId;
+          const msg = note.message?.toLowerCase() || "";
+          const isAssignmentAlert =
+            msg.includes("assigned") ||
+            msg.includes("claimed") ||
+            msg.includes("table station");
+
+          return isTargetedToUser || isAssignmentAlert;
+        });
+      }
+
+      setNotificationsList(rawList);
     } catch (err) {
       console.error("Failed to load notifications:", err);
     } finally {
