@@ -369,16 +369,9 @@ export default function OrdersPage() {
                         <div>
                           <div className="flex justify-between gap-2 items-start">
                             <div>
-                              <div className="flex items-center gap-2">
-                                <p className="font-mono font-bold text-xs text-[var(--muted)]">
-                                  #{order.id.slice(0, 4).toUpperCase()}
-                                </p>
-                                {order.status === "placed" && (
-                                  <span className="inline-flex items-center rounded-full bg-[var(--terracotta)] px-2 py-0.5 text-[9px] font-extrabold text-white animate-pulse shadow-[0_0_8px_#c1622e]">
-                                    🔥 NEW
-                                  </span>
-                                )}
-                              </div>
+                              <p className="font-mono font-bold text-xs text-[var(--muted)]">
+                                #{order.id.slice(0, 4).toUpperCase()}
+                              </p>
                               <h3 className="font-bold text-sm mt-1">{order.guest_name || "Guest customer"}</h3>
                             </div>
                             <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0 uppercase tracking-wider ${
