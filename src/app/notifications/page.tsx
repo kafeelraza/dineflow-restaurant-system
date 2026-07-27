@@ -71,10 +71,10 @@ export default function NotificationsPage() {
     <DashboardShell title="Notifications center" subtitle="Real-time operational alerts, customer checkouts, and system logs.">
       <div className="mb-6 flex items-center justify-between gap-4">
         <Link
-          href="/dashboard"
+          href="/dashboard/orders"
           className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--muted)] hover:text-[var(--ink)] transition"
         >
-          <ArrowLeft size={13} /> Back to dashboard
+          <ArrowLeft size={13} /> Back to orders
         </Link>
         {notificationsList.length > 0 && (
           <button

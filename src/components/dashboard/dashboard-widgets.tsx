@@ -157,7 +157,7 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
 
         // If staff, restrict access to only orders and tables pages
         if (profile.role === "staff") {
-          const allowedStaffPages = ["/dashboard/orders", "/dashboard/tables", "/dashboard/performance"];
+          const allowedStaffPages = ["/dashboard/orders", "/dashboard/tables", "/dashboard/performance", "/notifications"];
           if (!allowedStaffPages.includes(pathname)) {
             router.push("/dashboard/orders");
             return;
