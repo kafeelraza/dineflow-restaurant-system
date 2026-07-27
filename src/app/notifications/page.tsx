@@ -84,17 +84,20 @@ export default function NotificationsPage() {
   }, []);
 
   const handleClearAll = async () => {
+    if (notificationsList.length === 0) return;
     try {
       setLoading(true);
+      const idsToDelete = notificationsList.map((n) => n.id);
+      
       const { error } = await supabase
         .from("notifications")
         .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000"); // deletes all rows safely
+        .in("id", idsToDelete); // Delete only the specific notifications displayed for this user
 
       if (error) throw error;
       setNotificationsList([]);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to clear notifications:", err);
     } finally {
       setLoading(false);
     }

@@ -211,6 +211,14 @@ export function MenuExperience() {
         const { error: itemsErr } = await supabase.from("order_items").insert(orderItemsData);
         if (itemsErr) throw itemsErr;
 
+        // Insert exactly 1 notification row in DB for Manager/Owner
+        const orderTypeLabel = orderType === "dine-in" ? `Table T${String(selectedTableNumber).padStart(2, "0")}` : "Takeaway";
+        const idTag = order.id.slice(0, 4).toUpperCase();
+        await supabase.from("notifications").insert({
+          message: `🔔 New ${orderType === "dine-in" ? "Dine-In" : "Takeaway"} Order #${idTag} placed (${orderTypeLabel}) — Total: ${formatRs(subtotal)}`,
+          is_read: false,
+        });
+
         // Save guest details to local storage to eliminate repetitive typing on subsequent orders
         localStorage.setItem("dineflow_guest_name", guestName.trim());
         if (guestPhone.trim()) {

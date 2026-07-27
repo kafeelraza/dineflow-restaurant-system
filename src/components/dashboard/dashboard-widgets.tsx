@@ -82,12 +82,6 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
           const idTag = newOrd.id.slice(0, 4).toUpperCase();
           const amount = newOrd.total_amount ? `Rs. ${newOrd.total_amount}` : "";
 
-          // Insert into notifications database table for system history
-          await supabase.from("notifications").insert({
-            message: `🔔 New ${orderTypeLabel} Order #${idTag} placed (${amount || "Rs. 0"})`,
-            is_read: false,
-          });
-
           setToastAlert({
             id: newOrd.id,
             title: `🔔 New ${orderTypeLabel} Order #${idTag}!`,
