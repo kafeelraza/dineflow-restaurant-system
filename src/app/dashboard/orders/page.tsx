@@ -428,7 +428,7 @@ export default function OrdersPage() {
                             </div>
                           )}
 
-                          {!order.assigned_staff_id && (
+                          {userRole === "staff" && !order.assigned_staff_id && (
                             <button
                               disabled={updatingId === order.id}
                               onClick={() => handleClaimOrder(order.id)}
