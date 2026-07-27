@@ -58,7 +58,7 @@ export default function OrdersPage() {
   const [assigningMap, setAssigningMap] = useState<Record<string, string>>({});
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [settlingOrderId, setSettlingOrderId] = useState<string | null>(null);
-  const [stationOnly, setStationOnly] = useState(false);
+  const [orderFilterMode, setOrderFilterMode] = useState<"all" | "dine-in" | "takeaway" | "my-assigned">("all");
   const [activeColumnTab, setActiveColumnTab] = useState<string>("all");
 
   const fetchOrdersData = async () => {
@@ -115,27 +115,7 @@ export default function OrdersPage() {
         `)
         .neq("status", "billed");
 
-      // 4. Filter orders for staff isolation ONLY if stationOnly filter is enabled
-      if (role === "staff" && stationOnly) {
-        // Staff should only see:
-        // A. Orders directly assigned to them (for takeaway or specific task)
-        // B. Dine-in orders linked to tables assigned to them
-        const { data: staffTables } = await supabase
-          .from("restaurant_tables")
-          .select("id")
-          .eq("assigned_staff_id", user.id);
-
-        const assignedTableIds = staffTables?.map((t) => t.id) || [];
-
-        // Apply complex query condition using OR filter on table_id or assigned_staff_id
-        if (assignedTableIds.length > 0) {
-          query = query.or(`assigned_staff_id.eq.${user.id},table_id.in.(${assignedTableIds.join(",")})`);
-        } else {
-          query = query.eq("assigned_staff_id", user.id);
-        }
-      }
-
-      const { data: ordersData, error: ordersErr } = await query.order("created_at", { ascending: true });
+      const { data: ordersData, error: ordersErr } = await query.order("created_at", { ascending: false });
       if (ordersErr) throw ordersErr;
 
       const loadedOrders = (ordersData as any[]) || [];
@@ -273,37 +253,67 @@ export default function OrdersPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {userRole === "staff" && (
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-[#eadfce] p-3.5 rounded-[8px] shadow-sm">
-              <span className="text-xs font-extrabold text-[var(--muted)] uppercase tracking-wider">Quick Station Filter:</span>
-              <div className="flex gap-2">
+          {/* Quick Order Filter Pill Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-[#eadfce] p-3.5 rounded-[10px] shadow-sm">
+            <span className="text-xs font-extrabold text-[var(--muted)] uppercase tracking-wider">
+              Filter Orders:
+            </span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setOrderFilterMode("all")}
+                className={`h-9 px-4 rounded-full text-xs font-bold transition ${
+                  orderFilterMode === "all"
+                    ? "bg-[var(--ink)] text-white shadow-sm"
+                    : "border border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
+                }`}
+              >
+                All Orders ({localOrders.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setOrderFilterMode("dine-in")}
+                className={`h-9 px-4 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
+                  orderFilterMode === "dine-in"
+                    ? "bg-[var(--terracotta)] text-white shadow-sm"
+                    : "border border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
+                }`}
+              >
+                🍽️ Dine-In ({localOrders.filter((o) => o.order_type === "dine-in").length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setOrderFilterMode("takeaway")}
+                className={`h-9 px-4 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
+                  orderFilterMode === "takeaway"
+                    ? "bg-[var(--sage)] text-white shadow-sm"
+                    : "border border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
+                }`}
+              >
+                🛍️ Takeaway ({localOrders.filter((o) => o.order_type === "takeaway").length})
+              </button>
+
+              {userRole === "staff" && (
                 <button
                   type="button"
-                  onClick={() => setStationOnly(false)}
-                  className={`h-9 px-4 rounded-full text-xs font-bold transition ${
-                    !stationOnly 
-                      ? "bg-[var(--ink)] text-white" 
+                  onClick={() => setOrderFilterMode("my-assigned")}
+                  className={`h-9 px-4 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
+                    orderFilterMode === "my-assigned"
+                      ? "bg-[#a07012] text-white shadow-sm"
                       : "border border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
                   }`}
                 >
-                  All Kitchen Orders ({localOrders.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStationOnly(true)}
-                  className={`h-9 px-4 rounded-full text-xs font-bold transition ${
-                    stationOnly 
-                      ? "bg-[var(--terracotta)] text-white" 
-                      : "border border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
-                  }`}
-                >
-                  🎯 My Assigned Tables Only ({
-                    localOrders.filter((o) => o.assigned_staff_id === userId || o.restaurant_tables?.assigned_staff_id === userId).length
+                  🎯 My Assigned ({
+                    localOrders.filter(
+                      (o) => o.assigned_staff_id === userId || o.restaurant_tables?.assigned_staff_id === userId
+                    ).length
                   })
                 </button>
-              </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Mobile Column Tab Switcher */}
           <div className="flex gap-2 overflow-x-auto pb-1 xl:hidden">
@@ -338,9 +348,14 @@ export default function OrdersPage() {
                 return null;
               }
 
-              const displayedOrders = stationOnly 
-                ? localOrders.filter((o) => o.assigned_staff_id === userId || o.restaurant_tables?.assigned_staff_id === userId)
-                : localOrders;
+              const displayedOrders = localOrders.filter((o) => {
+                if (orderFilterMode === "dine-in") return o.order_type === "dine-in";
+                if (orderFilterMode === "takeaway") return o.order_type === "takeaway";
+                if (orderFilterMode === "my-assigned") {
+                  return o.assigned_staff_id === userId || o.restaurant_tables?.assigned_staff_id === userId;
+                }
+                return true;
+              });
 
               return (
                 <section key={column} className="rounded-[8px] border border-[#eadfce] bg-white p-4 flex flex-col min-h-[70vh]">
