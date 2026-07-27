@@ -58,7 +58,7 @@ export default function OrdersPage() {
   const [assigningMap, setAssigningMap] = useState<Record<string, string>>({});
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [settlingOrderId, setSettlingOrderId] = useState<string | null>(null);
-  const [orderFilterMode, setOrderFilterMode] = useState<string>("all_assigned");
+  const [orderFilterMode, setOrderFilterMode] = useState<string>("all");
   const [activeColumnTab, setActiveColumnTab] = useState<string>("all");
 
   const fetchOrdersData = async () => {
@@ -253,148 +253,58 @@ export default function OrdersPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Quick Order Filter Radio Bar */}
-          <div className="bg-white border border-[#eadfce] p-4 rounded-[12px] shadow-sm space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eadfce] pb-2.5">
-              <span className="text-xs font-extrabold text-[var(--muted)] uppercase tracking-wider flex items-center gap-1.5">
-                <Filter size={14} className="text-[var(--terracotta)]" /> Filter Order Queue:
-              </span>
-              <span className="text-xs font-bold text-[var(--terracotta)] font-mono">
-                Active Filter Mode: <span className="capitalize">{orderFilterMode.replace("_", " ")}</span>
-              </span>
-            </div>
+          {/* Quick Order Filter Pill Bar (3 Options) */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-[#eadfce] p-3.5 rounded-[10px] shadow-sm">
+            <span className="text-xs font-extrabold text-[var(--muted)] uppercase tracking-wider flex items-center gap-1.5">
+              <Filter size={14} className="text-[var(--terracotta)]" /> Filter Orders:
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {/* Option 1: All Orders */}
+              <button
+                type="button"
+                onClick={() => setOrderFilterMode("all")}
+                className={`h-9 px-4 rounded-full text-xs font-bold transition ${
+                  orderFilterMode === "all"
+                    ? "bg-[var(--ink)] text-white shadow-sm"
+                    : "border border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
+                }`}
+              >
+                All Orders ({localOrders.length})
+              </button>
 
-            <div className="flex flex-wrap items-center gap-3">
-              {userRole === "staff" ? (
-                <>
-                  {/* Staff Radio Option 1: All My Assigned */}
-                  <label className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold cursor-pointer transition select-none ${
-                    orderFilterMode === "all_assigned"
-                      ? "border-[var(--terracotta)] bg-[#f8eadf] text-[var(--terracotta)] shadow-xs"
-                      : "border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
-                  }`}>
-                    <input
-                      type="radio"
-                      name="staffOrderFilter"
-                      value="all_assigned"
-                      checked={orderFilterMode === "all_assigned"}
-                      onChange={() => setOrderFilterMode("all_assigned")}
-                      className="accent-[#c1622e] h-3.5 w-3.5 cursor-pointer"
-                    />
-                    <span>🎯 My Assigned Orders ({
-                      localOrders.filter((o) => o.assigned_staff_id === userId || o.restaurant_tables?.assigned_staff_id === userId).length
-                    })</span>
-                  </label>
+              {/* Option 2: My Dine-In / Dine-In Orders */}
+              <button
+                type="button"
+                onClick={() => setOrderFilterMode("dine-in")}
+                className={`h-9 px-4 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
+                  orderFilterMode === "dine-in"
+                    ? "bg-[var(--terracotta)] text-white shadow-sm"
+                    : "border border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
+                }`}
+              >
+                🍽️ {userRole === "staff" ? "My Dine-In" : "Dine-In Orders"} ({
+                  userRole === "staff"
+                    ? localOrders.filter((o) => (o.assigned_staff_id === userId || o.restaurant_tables?.assigned_staff_id === userId) && o.order_type === "dine-in").length
+                    : localOrders.filter((o) => o.order_type === "dine-in").length
+                })
+              </button>
 
-                  {/* Staff Radio Option 2: My Dine-In Only */}
-                  <label className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold cursor-pointer transition select-none ${
-                    orderFilterMode === "my_dine_in"
-                      ? "border-[var(--terracotta)] bg-[#f8eadf] text-[var(--terracotta)] shadow-xs"
-                      : "border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
-                  }`}>
-                    <input
-                      type="radio"
-                      name="staffOrderFilter"
-                      value="my_dine_in"
-                      checked={orderFilterMode === "my_dine_in"}
-                      onChange={() => setOrderFilterMode("my_dine_in")}
-                      className="accent-[#c1622e] h-3.5 w-3.5 cursor-pointer"
-                    />
-                    <span>🍽️ My Dine-In Tables ({
-                      localOrders.filter((o) => (o.assigned_staff_id === userId || o.restaurant_tables?.assigned_staff_id === userId) && o.order_type === "dine-in").length
-                    })</span>
-                  </label>
-
-                  {/* Staff Radio Option 3: My Takeaway Only */}
-                  <label className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold cursor-pointer transition select-none ${
-                    orderFilterMode === "my_takeaway"
-                      ? "border-[var(--sage)] bg-[#eaf2e5] text-[var(--sage)] shadow-xs"
-                      : "border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
-                  }`}>
-                    <input
-                      type="radio"
-                      name="staffOrderFilter"
-                      value="my_takeaway"
-                      checked={orderFilterMode === "my_takeaway"}
-                      onChange={() => setOrderFilterMode("my_takeaway")}
-                      className="accent-[#4f7d52] h-3.5 w-3.5 cursor-pointer"
-                    />
-                    <span>🛍️ My Takeaways ({
-                      localOrders.filter((o) => (o.assigned_staff_id === userId || o.restaurant_tables?.assigned_staff_id === userId) && o.order_type === "takeaway").length
-                    })</span>
-                  </label>
-
-                  {/* Staff Radio Option 4: All Kitchen Orders */}
-                  <label className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold cursor-pointer transition select-none ${
-                    orderFilterMode === "all_kitchen"
-                      ? "border-[var(--ink)] bg-[var(--ink)] text-white shadow-xs"
-                      : "border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
-                  }`}>
-                    <input
-                      type="radio"
-                      name="staffOrderFilter"
-                      value="all_kitchen"
-                      checked={orderFilterMode === "all_kitchen"}
-                      onChange={() => setOrderFilterMode("all_kitchen")}
-                      className="accent-[#2b2621] h-3.5 w-3.5 cursor-pointer"
-                    />
-                    <span>🌐 All Kitchen Orders ({localOrders.length})</span>
-                  </label>
-                </>
-              ) : (
-                <>
-                  {/* Admin Radio Option 1: All Orders */}
-                  <label className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold cursor-pointer transition select-none ${
-                    orderFilterMode === "all"
-                      ? "border-[var(--ink)] bg-[var(--ink)] text-white shadow-xs"
-                      : "border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
-                  }`}>
-                    <input
-                      type="radio"
-                      name="adminOrderFilter"
-                      value="all"
-                      checked={orderFilterMode === "all"}
-                      onChange={() => setOrderFilterMode("all")}
-                      className="accent-[#2b2621] h-3.5 w-3.5 cursor-pointer"
-                    />
-                    <span>All Restaurant Orders ({localOrders.length})</span>
-                  </label>
-
-                  {/* Admin Radio Option 2: Dine-In Only */}
-                  <label className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold cursor-pointer transition select-none ${
-                    orderFilterMode === "dine-in"
-                      ? "border-[var(--terracotta)] bg-[#f8eadf] text-[var(--terracotta)] shadow-xs"
-                      : "border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
-                  }`}>
-                    <input
-                      type="radio"
-                      name="adminOrderFilter"
-                      value="dine-in"
-                      checked={orderFilterMode === "dine-in"}
-                      onChange={() => setOrderFilterMode("dine-in")}
-                      className="accent-[#c1622e] h-3.5 w-3.5 cursor-pointer"
-                    />
-                    <span>🍽️ Dine-In Only ({localOrders.filter((o) => o.order_type === "dine-in").length})</span>
-                  </label>
-
-                  {/* Admin Radio Option 3: Takeaway Only */}
-                  <label className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold cursor-pointer transition select-none ${
-                    orderFilterMode === "takeaway"
-                      ? "border-[var(--sage)] bg-[#eaf2e5] text-[var(--sage)] shadow-xs"
-                      : "border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
-                  }`}>
-                    <input
-                      type="radio"
-                      name="adminOrderFilter"
-                      value="takeaway"
-                      checked={orderFilterMode === "takeaway"}
-                      onChange={() => setOrderFilterMode("takeaway")}
-                      className="accent-[#4f7d52] h-3.5 w-3.5 cursor-pointer"
-                    />
-                    <span>🛍️ Takeaway Only ({localOrders.filter((o) => o.order_type === "takeaway").length})</span>
-                  </label>
-                </>
-              )}
+              {/* Option 3: My Takeaway / Takeaway Orders */}
+              <button
+                type="button"
+                onClick={() => setOrderFilterMode("takeaway")}
+                className={`h-9 px-4 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
+                  orderFilterMode === "takeaway"
+                    ? "bg-[var(--sage)] text-white shadow-sm"
+                    : "border border-[#d7c9b5] bg-[#fcfaf6] text-[var(--ink)] hover:bg-white"
+                }`}
+              >
+                🛍️ {userRole === "staff" ? "My Takeaway" : "Takeaway Orders"} ({
+                  userRole === "staff"
+                    ? localOrders.filter((o) => (o.assigned_staff_id === userId || o.restaurant_tables?.assigned_staff_id === userId) && o.order_type === "takeaway").length
+                    : localOrders.filter((o) => o.order_type === "takeaway").length
+                })
+              </button>
             </div>
           </div>
 
@@ -434,26 +344,13 @@ export default function OrdersPage() {
               const displayedOrders = localOrders.filter((o) => {
                 const isAssignedToMe = o.assigned_staff_id === userId || o.restaurant_tables?.assigned_staff_id === userId;
 
-                if (userRole === "staff") {
-                  if (orderFilterMode === "my_dine_in") {
-                    return isAssignedToMe && o.order_type === "dine-in";
-                  }
-                  if (orderFilterMode === "my_takeaway") {
-                    return isAssignedToMe && o.order_type === "takeaway";
-                  }
-                  if (orderFilterMode === "all_assigned") {
-                    return isAssignedToMe;
-                  }
-                  if (orderFilterMode === "all_kitchen") {
-                    return true;
-                  }
-                  return isAssignedToMe;
-                } else {
-                  // Admin / Owner
-                  if (orderFilterMode === "dine-in") return o.order_type === "dine-in";
-                  if (orderFilterMode === "takeaway") return o.order_type === "takeaway";
-                  return true;
+                if (orderFilterMode === "dine-in") {
+                  return userRole === "staff" ? (isAssignedToMe && o.order_type === "dine-in") : (o.order_type === "dine-in");
                 }
+                if (orderFilterMode === "takeaway") {
+                  return userRole === "staff" ? (isAssignedToMe && o.order_type === "takeaway") : (o.order_type === "takeaway");
+                }
+                return true;
               });
 
               return (
