@@ -44,7 +44,12 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
   const [role, setRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
   const [assignedTables, setAssignedTables] = useState<string[]>([]);
-  const [hasUnreadOrders, setHasUnreadOrders] = useState<boolean>(false);
+  const [hasUnreadOrders, setHasUnreadOrders] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("dineflow_has_unread_orders") === "true";
+    }
+    return false;
+  });
   const [toastAlert, setToastAlert] = useState<{
     id: string;
     title: string;
@@ -52,11 +57,11 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
     type: "order" | "payment";
   } | null>(null);
 
-  // Clear unread orders badge when user visits /dashboard/orders
+  // Clear unread orders badge ONLY when user explicitly visits /dashboard/orders
   useEffect(() => {
     if (pathname === "/dashboard/orders") {
       setHasUnreadOrders(false);
-      localStorage.setItem("dineflow_last_seen_orders_time", Date.now().toString());
+      localStorage.setItem("dineflow_has_unread_orders", "false");
     }
   }, [pathname]);
 
@@ -67,14 +72,21 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "orders" },
-        (payload) => {
+        async (payload) => {
           const newOrd = payload.new;
           if (pathname !== "/dashboard/orders") {
             setHasUnreadOrders(true);
+            localStorage.setItem("dineflow_has_unread_orders", "true");
           }
           const orderTypeLabel = newOrd.order_type === "dine-in" ? "Dine-In" : "Takeaway";
           const idTag = newOrd.id.slice(0, 4).toUpperCase();
           const amount = newOrd.total_amount ? `Rs. ${newOrd.total_amount}` : "";
+
+          // Insert into notifications database table for system history
+          await supabase.from("notifications").insert({
+            message: `🔔 New ${orderTypeLabel} Order #${idTag} placed (${amount || "Rs. 0"})`,
+            is_read: false,
+          });
 
           setToastAlert({
             id: newOrd.id,
@@ -91,12 +103,19 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "orders" },
-        (payload) => {
+        async (payload) => {
           const newOrd = payload.new;
           const oldOrd = payload.old;
           if (newOrd.status === "billed" && oldOrd.status !== "billed") {
             const idTag = newOrd.id.slice(0, 4).toUpperCase();
             const amount = newOrd.total_amount ? `Rs. ${newOrd.total_amount}` : "";
+
+            // Insert into notifications database table for payment settlement history
+            await supabase.from("notifications").insert({
+              message: `💳 Bill Paid & Settled for Order #${idTag} (${amount || "Rs. 0"}). Table released.`,
+              is_read: false,
+            });
+
             setToastAlert({
               id: newOrd.id,
               title: `💳 Payment Settled for Order #${idTag}!`,
