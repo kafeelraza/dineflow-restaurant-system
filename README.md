@@ -3,6 +3,7 @@
 > **Vibeathon 6.0 Hackathon Project**  
 > **Team Name:** `kafeelraza55`  
 > **Team Leader:** Kafeel Raza  
+> **Teammate:** Asjad Khan  
 > **Live Demo URL:** [https://dineflow-restaurant-system.vercel.app](https://dineflow-restaurant-system.vercel.app)  
 > **GitHub Repository:** [https://github.com/kafeelraza/dineflow-restaurant-system](https://github.com/kafeelraza/dineflow-restaurant-system)
 
@@ -98,5 +99,7 @@ For hackathon judges and evaluators, test the application across different user 
 
 ---
 
-## 📜 License
+## 📜 Team Members & License
+* **Team Leader:** Kafeel Raza
+* **Teammate:** Asjad Khan  
 Developed for **Vibeathon 6.0 Hackathon (July 2026)** by Team `kafeelraza55`. All rights reserved.
