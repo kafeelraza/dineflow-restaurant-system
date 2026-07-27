@@ -44,6 +44,78 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
   const [role, setRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
   const [assignedTables, setAssignedTables] = useState<string[]>([]);
+  const [hasUnreadOrders, setHasUnreadOrders] = useState<boolean>(false);
+  const [toastAlert, setToastAlert] = useState<{
+    id: string;
+    title: string;
+    message: string;
+    type: "order" | "payment";
+  } | null>(null);
+
+  // Clear unread orders badge when user visits /dashboard/orders
+  useEffect(() => {
+    if (pathname === "/dashboard/orders") {
+      setHasUnreadOrders(false);
+      localStorage.setItem("dineflow_last_seen_orders_time", Date.now().toString());
+    }
+  }, [pathname]);
+
+  // Realtime listener for new orders (orange dot badge) & payments (top-right toast alert)
+  useEffect(() => {
+    const channel = supabase
+      .channel("dashboard-shell-realtime-alerts")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "orders" },
+        (payload) => {
+          const newOrd = payload.new;
+          if (pathname !== "/dashboard/orders") {
+            setHasUnreadOrders(true);
+          }
+          const orderTypeLabel = newOrd.order_type === "dine-in" ? "Dine-In" : "Takeaway";
+          const idTag = newOrd.id.slice(0, 4).toUpperCase();
+          const amount = newOrd.total_amount ? `Rs. ${newOrd.total_amount}` : "";
+
+          setToastAlert({
+            id: newOrd.id,
+            title: `🔔 New ${orderTypeLabel} Order #${idTag}!`,
+            message: `New order received (${amount}). Click to view board.`,
+            type: "order",
+          });
+
+          setTimeout(() => {
+            setToastAlert(null);
+          }, 4500);
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "orders" },
+        (payload) => {
+          const newOrd = payload.new;
+          const oldOrd = payload.old;
+          if (newOrd.status === "billed" && oldOrd.status !== "billed") {
+            const idTag = newOrd.id.slice(0, 4).toUpperCase();
+            const amount = newOrd.total_amount ? `Rs. ${newOrd.total_amount}` : "";
+            setToastAlert({
+              id: newOrd.id,
+              title: `💳 Payment Settled for Order #${idTag}!`,
+              message: `Payment received (${amount}). Table released to available.`,
+              type: "payment",
+            });
+
+            setTimeout(() => {
+              setToastAlert(null);
+            }, 4500);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -108,6 +180,33 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
 
   return (
     <main className="min-h-screen bg-[#2b2621] p-3 text-[var(--ink)] md:p-5">
+      {/* Top-Right Floating Toast Alert Popup */}
+      {toastAlert && (
+        <div className="fixed top-5 right-5 z-[100] max-w-sm rounded-[12px] border border-[#eadfce] bg-white p-4 shadow-2xl animate-in slide-in-from-top-5 duration-300 flex items-start gap-3.5">
+          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white font-bold ${
+            toastAlert.type === "order" ? "bg-[var(--terracotta)]" : "bg-[var(--sage)]"
+          }`}>
+            {toastAlert.type === "order" ? <ChefHat size={20} /> : <CreditCard size={20} />}
+          </span>
+          <div className="flex-1 pr-2">
+            <h4 className="font-serif font-bold text-sm text-[var(--ink)]">{toastAlert.title}</h4>
+            <p className="text-xs text-[var(--muted)] mt-0.5 font-semibold">{toastAlert.message}</p>
+            <button
+              onClick={() => {
+                setToastAlert(null);
+                if (pathname !== "/dashboard/orders") {
+                  router.push("/dashboard/orders");
+                }
+              }}
+              className="mt-2 text-[11px] font-bold text-[var(--terracotta)] underline hover:opacity-80"
+            >
+              View in Orders Kanban →
+            </button>
+          </div>
+          <button onClick={() => setToastAlert(null)} className="text-[var(--muted)] hover:text-[var(--ink)] text-xs font-bold">✕</button>
+        </div>
+      )}
+
       <div className="grid min-h-[calc(100vh-24px)] overflow-hidden rounded-[8px] bg-[#fcfaf6] lg:grid-cols-[250px_1fr]">
         <aside className="hidden border-r border-[#eadfce] bg-[#f5efe5] p-5 lg:flex lg:flex-col lg:justify-between">
           <div>
@@ -126,8 +225,24 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
                 const active = pathname === item.href;
                 const Icon = item.icon;
                 return (
-                  <Link key={item.href} href={item.href} className={`mb-2 flex items-center gap-3 rounded-[8px] px-4 py-3 text-sm font-bold ${active ? "bg-white text-[var(--terracotta)] shadow-sm" : "text-[var(--muted)] hover:bg-white/60"}`}>
-                    <Icon size={18} /> {item.label}
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => {
+                      if (item.href === "/dashboard/orders") {
+                        setHasUnreadOrders(false);
+                      }
+                    }}
+                    className={`relative mb-2 flex items-center justify-between gap-3 rounded-[8px] px-4 py-3 text-sm font-bold ${
+                      active ? "bg-white text-[var(--terracotta)] shadow-sm" : "text-[var(--muted)] hover:bg-white/60"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon size={18} /> {item.label}
+                    </div>
+                    {item.href === "/dashboard/orders" && hasUnreadOrders && (
+                      <span className="h-2.5 w-2.5 rounded-full bg-[var(--terracotta)] animate-pulse shadow-[0_0_8px_#c1622e]" />
+                    )}
                   </Link>
                 );
               })}
@@ -176,13 +291,21 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition ${
+                      onClick={() => {
+                        if (item.href === "/dashboard/orders") {
+                          setHasUnreadOrders(false);
+                        }
+                      }}
+                      className={`relative shrink-0 rounded-full px-4 py-2 text-xs font-bold transition flex items-center gap-1.5 ${
                         active
                           ? "bg-[var(--terracotta)] text-white shadow-sm"
                           : "border border-[#d7c9b5] bg-white text-[var(--ink)] hover:bg-[#fcfaf6]"
                       }`}
                     >
                       {item.label}
+                      {item.href === "/dashboard/orders" && hasUnreadOrders && (
+                        <span className="h-2 w-2 rounded-full bg-[var(--terracotta)] animate-pulse" />
+                      )}
                     </Link>
                   );
                 })}

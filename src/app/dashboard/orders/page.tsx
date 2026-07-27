@@ -439,19 +439,22 @@ export default function OrdersPage() {
                           )}
 
                           {/* Time and Price information */}
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="flex items-center gap-1 text-[10px] font-bold text-[var(--muted)] font-mono">
-                              <Clock3 size={11} />
-                              {order.estimated_ready_at
-                                ? new Date(order.estimated_ready_at).toLocaleTimeString([], {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })
-                                : "12 mins"}
-                            </span>
-                            <span className="font-mono font-bold text-[var(--ink)]">
-                              {formatRs(order.total_amount)}
-                            </span>
+                          <div className="mt-2 flex flex-col gap-1.5 border-t border-[#eadfce] pt-2.5 text-xs">
+                            <div className="flex justify-between items-center text-[10px] font-semibold text-[var(--muted)] font-mono">
+                              <span className="flex items-center gap-1 font-bold text-[var(--ink)]">
+                                <Clock3 size={11} className="text-[var(--terracotta)]" />
+                                Placed: {new Date(order.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                              <span>
+                                {order.estimated_ready_at
+                                  ? `Est: ${new Date(order.estimated_ready_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                                  : "~12m prep"}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center font-bold">
+                              <span className="text-[10px] uppercase tracking-wider text-[var(--muted)]">Order Total</span>
+                              <span className="font-mono text-sm font-bold text-[var(--terracotta)]">{formatRs(order.total_amount)}</span>
+                            </div>
                           </div>
 
                           {/* Action Button: Staff can Move, Admin can Archive Served orders */}
