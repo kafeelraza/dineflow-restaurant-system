@@ -232,6 +232,9 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
                 if (role === "staff") {
                   return ["/dashboard/orders", "/dashboard/tables", "/dashboard/performance"].includes(item.href);
                 }
+                if (role === "admin") {
+                  return item.href !== "/dashboard/performance";
+                }
                 return true;
               })
               .map((item) => {
@@ -247,7 +250,7 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
                       }
                     }}
                     className={`relative mb-2 flex items-center justify-between gap-3 rounded-[8px] px-4 py-3 text-sm font-bold ${
-                      active ? "bg-white text-[var(--terracotta)] shadow-sm" : "text-[var(--muted)] hover:bg-white/60"
+                      active ? "bg-white text-[var(--terracotta)] shadow-sm" : "text-[var(--muted)] hover:bg-[#1a1815]/5 hover:bg-white/60"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -295,6 +298,9 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
                 .filter((item) => {
                   if (role === "staff") {
                     return ["/dashboard/orders", "/dashboard/tables", "/dashboard/performance"].includes(item.href);
+                  }
+                  if (role === "admin") {
+                    return item.href !== "/dashboard/performance";
                   }
                   return true;
                 })
