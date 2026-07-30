@@ -82,6 +82,25 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
           const idTag = newOrd.id.slice(0, 4).toUpperCase();
           const amount = newOrd.total_amount ? `Rs. ${newOrd.total_amount}` : "";
 
+          // Play kitchen order bell sound chime via Web Audio API
+          try {
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            if (AudioCtx) {
+              const ctx = new AudioCtx();
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = "sine";
+              osc.frequency.setValueAtTime(880, ctx.currentTime);
+              osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.15);
+              gain.gain.setValueAtTime(0.25, ctx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start();
+              osc.stop(ctx.currentTime + 0.5);
+            }
+          } catch (e) {}
+
           setToastAlert({
             id: newOrd.id,
             title: `🔔 New ${orderTypeLabel} Order #${idTag}!`,

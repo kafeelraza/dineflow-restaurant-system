@@ -486,22 +486,58 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
 }
 
 export function OrderStepper({ status = "preparing" }: { status?: string }) {
-  const steps = ["placed", "confirmed", "preparing", "ready", "served"];
-  const active = Math.max(0, steps.indexOf(status));
+  const steps = [
+    { key: "placed", label: "Order Placed" },
+    { key: "confirmed", label: "Chef Confirmed" },
+    { key: "preparing", label: "Kitchen Prep" },
+    { key: "ready", label: "Ready to Serve" },
+    { key: "served", label: "Served & Complete" },
+  ];
+  const stepKeys = steps.map((s) => s.key);
+  const active = Math.max(0, stepKeys.indexOf(status));
 
   return (
-    <div className="grid gap-4 md:grid-cols-5">
-      {steps.map((step, index) => {
-        const done = index <= active;
-        return (
-          <div key={step} className={`rounded-[8px] border p-4 ${done ? "border-[var(--terracotta)] bg-[#f8eadf]" : "border-[#eadfce] bg-[#fcfaf6]"}`}>
-            <span className={`flex h-9 w-9 items-center justify-center rounded-full ${done ? "bg-[var(--terracotta)] text-white" : "bg-[#eadfce] text-[var(--muted)]"}`}>
-              {done ? <Check size={16} /> : index + 1}
-            </span>
-            <p className="mt-4 text-sm font-bold capitalize">{step}</p>
-          </div>
-        );
-      })}
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-5">
+        {steps.map((stepItem, index) => {
+          const done = index <= active;
+          const isCurrent = index === active;
+
+          return (
+            <div
+              key={stepItem.key}
+              className={`rounded-[12px] border p-4 transition-all duration-300 ${
+                isCurrent
+                  ? "border-[var(--terracotta)] bg-white shadow-md ring-2 ring-[var(--terracotta)]/20"
+                  : done
+                  ? "border-[#d7c9b5] bg-[#f8eadf]"
+                  : "border-[#eadfce] bg-[#fcfaf6] opacity-60"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`flex h-9 w-9 items-center justify-center rounded-full font-bold text-xs ${
+                    done
+                      ? "bg-[var(--terracotta)] text-white shadow-sm"
+                      : "bg-[#eadfce] text-[var(--muted)]"
+                  }`}
+                >
+                  {done ? <Check size={16} /> : index + 1}
+                </span>
+                {isCurrent && (
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-[var(--terracotta)] animate-ping" />
+                )}
+              </div>
+              <p className="mt-3 text-xs font-bold capitalize text-[var(--ink)]">
+                {stepItem.label}
+              </p>
+              <p className="text-[10px] text-[var(--muted)] font-semibold mt-0.5">
+                {done ? "Completed" : "Pending"}
+              </p>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

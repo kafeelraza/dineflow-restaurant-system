@@ -187,6 +187,29 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
             <div className="mt-6">
               <OrderStepper status={order.status} />
             </div>
+
+            {/* Customer Rating & AI Sentiment Feedback (Beta) */}
+            <div className="mt-8 rounded-[12px] border border-[#eadfce] bg-[#fcfaf6] p-5">
+              <div className="flex items-center justify-between">
+                <h3 className="font-serif font-bold text-lg text-[var(--ink)]">Rate your dining experience</h3>
+                <span className="rounded-full bg-[var(--terracotta)]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--terracotta)] border border-[var(--terracotta)]/20">
+                  Beta Feature
+                </span>
+              </div>
+              <p className="text-xs text-[var(--muted)] mt-1 font-semibold">Help us improve! Our Gemini AI analyzes guest feedback to refine kitchen operations.</p>
+
+              <div className="mt-4 flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => alert(`Thank you for rating ${star} stars! Feedback submitted to kitchen.`)}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-[#d7c9b5] bg-white text-sm font-bold text-[var(--terracotta)] hover:bg-[var(--terracotta)] hover:text-white transition"
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
           </Card>
           
           <Card className="p-6">

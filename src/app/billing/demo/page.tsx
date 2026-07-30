@@ -119,11 +119,28 @@ function BillingContent() {
     fetchBillData();
   }, [orderId]);
 
+  const [paymentCountdown, setPaymentCountdown] = useState<number | null>(null);
+
   const handleMarkPaid = async () => {
     if (allOrderIds.length === 0) return;
     setUpdating(true);
+    setPaymentCountdown(5);
+
+    // 5-second payment countdown timer as per Phase 2 rules
+    const timer = setInterval(() => {
+      setPaymentCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
     try {
+      // Wait 5 seconds for payment gateway simulation
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+
       // 1. Update order status to 'billed' for all consolidated orders
       const { error: orderErr } = await supabase
         .from("orders")
@@ -175,6 +192,7 @@ function BillingContent() {
       alert("Failed to mark bill as paid: " + (err.message || "Unknown error"));
     } finally {
       setUpdating(false);
+      setPaymentCountdown(null);
     }
   };
 
@@ -292,6 +310,29 @@ function BillingContent() {
           <Download size={18} /> Print Receipt
         </button>
       </div>
+
+      {paymentCountdown !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
+          <Card className="max-w-md w-full bg-white p-8 border border-[#eadfce] rounded-[20px] text-center shadow-2xl">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#f8eadf] text-[var(--terracotta)] mb-5 relative">
+              <Loader2 className="animate-spin text-[var(--terracotta)]" size={48} />
+              <span className="absolute font-mono text-lg font-bold text-[var(--terracotta)]">
+                {paymentCountdown}s
+              </span>
+            </div>
+            
+            <h3 className="font-serif text-3xl font-bold text-[var(--ink)]">Processing Payment</h3>
+            <p className="text-sm text-[var(--muted)] mt-2 leading-relaxed font-semibold">
+              Communicating with payment gateway... Confirmation in <span className="font-bold text-[var(--terracotta)]">{paymentCountdown} seconds</span>.
+            </p>
+
+            <div className="mt-6 rounded-[12px] bg-[#fcfaf6] border border-[#eadfce] p-4 text-xs font-semibold text-[var(--muted)] space-y-1">
+              <p>💳 Card Settlement: <span className="font-mono text-[var(--ink)]">Rs. {total}</span></p>
+              <p className="text-[10px] text-[var(--terracotta)] font-bold">Auto-closing window upon payment confirmation...</p>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">

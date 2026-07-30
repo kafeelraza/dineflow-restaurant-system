@@ -299,6 +299,12 @@ export default function TablesPage() {
               </div>
 
               <div className="space-y-2">
+                <button
+                  onClick={() => window.print()}
+                  className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-[var(--terracotta)] text-white text-xs font-bold transition hover:scale-[1.01]"
+                >
+                  <QrCode size={14} /> Print Table Standee Poster
+                </button>
                 <a
                   href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(
                     typeof window !== "undefined"
@@ -307,13 +313,13 @@ export default function TablesPage() {
                   )}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-[var(--terracotta)] text-white text-xs font-bold transition hover:scale-[1.01]"
+                  className="flex h-10 w-full items-center justify-center gap-2 rounded-full border border-[#d7c9b5] bg-[#fcfaf6] text-xs font-bold text-[var(--ink)] hover:bg-white transition"
                 >
-                  Open High-Res QR Code
+                  Open High-Res Image
                 </a>
                 <button
                   onClick={() => setSelectedQrTable(null)}
-                  className="flex h-10 w-full items-center justify-center rounded-full border border-[#d7c9b5] bg-[#fcfaf6] text-xs font-bold text-[var(--ink)] hover:bg-[#fcfaf6]/50 transition"
+                  className="flex h-10 w-full items-center justify-center rounded-full text-xs font-bold text-[var(--muted)] hover:text-[var(--ink)] transition"
                 >
                   Close
                 </button>
