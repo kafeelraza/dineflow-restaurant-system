@@ -211,7 +211,7 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
   }
 
   return (
-    <main className="min-h-screen bg-[#2b2621] p-3 text-[var(--ink)] md:p-5">
+    <main className="h-screen overflow-hidden bg-[#2b2621] p-3 text-[var(--ink)] md:p-5">
       {/* Top-Right Floating Toast Alert Popup */}
       {toastAlert && (
         <div className="fixed top-5 right-5 z-[100] max-w-sm rounded-[12px] border border-[#eadfce] bg-white p-4 shadow-2xl animate-in slide-in-from-top-5 duration-300 flex items-start gap-3.5">
@@ -239,8 +239,8 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
         </div>
       )}
 
-      <div className="grid min-h-[calc(100vh-24px)] overflow-hidden rounded-[8px] bg-[#fcfaf6] lg:grid-cols-[250px_1fr]">
-        <aside className="hidden border-r border-[#eadfce] bg-[#f5efe5] p-5 lg:sticky lg:top-3 lg:flex lg:h-[calc(100vh-24px)] lg:flex-col lg:justify-between self-start">
+      <div className="grid h-full overflow-hidden rounded-[8px] bg-[#fcfaf6] lg:grid-cols-[250px_1fr]">
+        <aside className="hidden border-r border-[#eadfce] bg-[#f5efe5] p-5 lg:flex lg:h-full lg:flex-col lg:justify-between">
           <div>
             <Link href="/" className="mb-8 flex items-center gap-3">
               <Utensils className="text-[var(--terracotta)]" />
@@ -291,7 +291,7 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
           </button>
         </aside>
         
-        <section className="min-w-0 p-5 md:p-7">
+        <section className="min-w-0 h-full overflow-y-auto p-5 md:p-7">
           <header className="flex flex-col justify-between gap-4 border-b border-[#eadfce] pb-5 md:flex-row md:items-center">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--terracotta)]">
