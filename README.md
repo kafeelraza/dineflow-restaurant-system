@@ -26,6 +26,15 @@ For quick evaluation of all primary workflows and Phase 2 features on the live d
 - **🖨️ Table QR Standee Generator:** [https://dineflow-restaurant-system.vercel.app/dashboard/tables](https://dineflow-restaurant-system.vercel.app/dashboard/tables) *(Generates printable table QR standee posters)*
 - **⏱️ Glowing Live Order Stepper & AI Review (`Beta`):** [https://dineflow-restaurant-system.vercel.app/order/demo](https://dineflow-restaurant-system.vercel.app/order/demo) *(Unlocked when order status is Served/Billed)*
 
+### 📖 3. Complete End-to-End Story-Style Operational Flow
+1. **Step 1: Table Arrival & QR Scan (Customer):** Customer sits at Table T02 and scans physical table QR code. Opens `/menu?table=2` tied to Table T02.
+2. **Step 2: AI Assistance & Frictionless Guest Checkout (Customer):** Customer chats with Gemini AI Assistant for dish recommendations, adds items, types guest name ("Rahul"), and places order in 1-click without mandatory login.
+3. **Step 3: Real-Time Kitchen Reception & Sound Bell Chime (Chef / Staff):** Kitchen Kanban (`/dashboard/orders`) updates live via Supabase WebSockets and plays dual-tone Web Audio Chime ("Ding-Dong! 🛎️"). Chef updates status: `Placed ➔ Confirmed ➔ Preparing ➔ Ready`.
+4. **Step 4: Live Progress Tracking & 5-Stage Stepper (Customer):** Customer opens `/order/[id]` and watches glowing progress timeline move live through 5 operational stages.
+5. **Step 5: Dining Completion & 5-Second Payment Window (Customer):** Customer opens `/billing/demo`. Clicking Pay Bill triggers animated 5-second payment confirmation window (`5s ➔ 4s ➔ 3s ➔ 2s ➔ 1s ➔ ✅ Settled`) and releases Table T02 to Available.
+6. **Step 6: Customer Review & Gemini AI Sentiment Rating (Beta):** Service completion unlocks 5-star rating widget on `/order/[id]` analyzed by Gemini AI.
+7. **Step 7: Executive Management & Standee Printing (Owner / Staff):** Owner logs into `/dashboard` via Email OTP or Password to view AI Daily Briefings, track inventory, and print high-res Table QR Standee posters in 1 click.
+
 ---
 
 ## 🌟 Executive Summary

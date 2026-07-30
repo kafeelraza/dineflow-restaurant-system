@@ -116,16 +116,67 @@ export function AppNav() {
             </div>
 
             <div className="mt-6 space-y-4">
+              {/* Story-Style End-to-End Workflow Breakdown */}
+              <div className="rounded-[12px] border border-[#eadfce] bg-[#f5efe5] p-4 space-y-3">
+                <h3 className="font-serif font-bold text-base text-[var(--ink)] flex items-center gap-2">
+                  📖 Complete End-to-End Operational Story Flow
+                </h3>
+                <div className="space-y-2.5 text-xs">
+                  <div className="p-3 rounded-[8px] bg-white border border-[#eadfce]">
+                    <span className="font-bold text-[var(--terracotta)]">Step 1: Table Arrival & QR Scanning (Customer)</span>
+                    <p className="text-[11px] text-[var(--muted)] font-semibold mt-1">
+                      Customer sits at Table T02 and scans the physical table QR code poster. The browser opens <code className="font-mono text-[var(--ink)]">/menu?table=2</code> in Dine-In mode automatically tied to Table T02.
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-[8px] bg-white border border-[#eadfce]">
+                    <span className="font-bold text-[var(--terracotta)]">Step 2: AI Assistance & Frictionless Guest Checkout (Customer)</span>
+                    <p className="text-[11px] text-[var(--muted)] font-semibold mt-1">
+                      Customer asks <span className="font-bold text-[var(--ink)]">Gemini AI Assistant</span> for dish suggestions & allergen info, selects items, types guest name ("Rahul"), and places order in 1-click without mandatory login.
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-[8px] bg-white border border-[#eadfce]">
+                    <span className="font-bold text-[var(--terracotta)]">Step 3: Real-Time Kitchen Reception & Sound Bell Chime (Chef / Staff)</span>
+                    <p className="text-[11px] text-[var(--muted)] font-semibold mt-1">
+                      Kitchen Kanban (<code className="font-mono text-[var(--ink)]">/dashboard/orders</code>) updates live via Supabase WebSockets and plays a dual-tone <span className="font-bold text-[var(--ink)]">Web Audio Chime ("Ding-Dong! 🛎️")</span>. Chef updates status: <span className="font-bold">Placed ➔ Confirmed ➔ Preparing ➔ Ready</span>.
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-[8px] bg-white border border-[#eadfce]">
+                    <span className="font-bold text-[var(--terracotta)]">Step 4: Live Progress Tracking & 5-Stage Stepper (Customer)</span>
+                    <p className="text-[11px] text-[var(--muted)] font-semibold mt-1">
+                      Customer opens <code className="font-mono text-[var(--ink)]">/order/[id]</code> and watches the glowing progress timeline move live through 5 operational stages.
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-[8px] bg-white border border-[#eadfce]">
+                    <span className="font-bold text-[var(--terracotta)]">Step 5: Dining Completion & 5-Second Payment Window (Customer)</span>
+                    <p className="text-[11px] text-[var(--muted)] font-semibold mt-1">
+                      Customer opens <code className="font-mono text-[var(--ink)]">/billing/demo</code>. Clicking Pay Bill triggers an animated 5-second payment confirmation window (<span className="font-bold text-[var(--terracotta)]">5s ➔ 4s ➔ 3s ➔ 2s ➔ 1s ➔ ✅ Settled</span>) and releases Table T02 to Available.
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-[8px] bg-white border border-[#eadfce]">
+                    <span className="font-bold text-[var(--terracotta)]">Step 6: Customer Review & Gemini AI Sentiment Rating (Beta)</span>
+                    <p className="text-[11px] text-[var(--muted)] font-semibold mt-1">
+                      Upon service completion, the 5-star rating widget unlocks on <code className="font-mono text-[var(--ink)]">/order/[id]</code> where Gemini AI analyzes guest feedback for operational refinement.
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-[8px] bg-white border border-[#eadfce]">
+                    <span className="font-bold text-[var(--terracotta)]">Step 7: Executive Management & Standee Printing (Owner / Staff)</span>
+                    <p className="text-[11px] text-[var(--muted)] font-semibold mt-1">
+                      Owner logs into <code className="font-mono text-[var(--ink)]">/dashboard</code> via Email OTP or Password to view AI Daily Briefings, track inventory, and print high-res Table QR Standee posters in 1 click.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Section 1: Authentication Engine */}
               <div className="rounded-[12px] border border-[#eadfce] bg-[#fcfaf6] p-4 space-y-2">
                 <h3 className="font-serif font-bold text-sm text-[var(--ink)] flex items-center gap-2">
-                  🔒 Authentication & Security Workflows
+                  🔒 Authentication Engine Breakdown
                 </h3>
                 <div className="grid gap-2 text-xs">
                   <div className="p-2.5 rounded-[8px] bg-white border border-[#eadfce]">
-                    <span className="font-bold text-[var(--ink)]">1. Email OTP & Password Auth (Primary):</span>
+                    <span className="font-bold text-[var(--ink)]">1. Email OTP & Password Auth (Primary Production):</span>
                     <p className="text-[11px] text-[var(--muted)] font-semibold mt-0.5">
-                      Sends real 6-digit verification tokens / magic links to real email inboxes via Supabase Auth server.
+                      Real 6-digit verification tokens / magic links sent to real email inboxes via Supabase Auth server.
                     </p>
                   </div>
                   <div className="p-2.5 rounded-[8px] bg-white border border-[#eadfce]">
@@ -179,17 +230,6 @@ export function AppNav() {
                     <span className="text-[var(--terracotta)]">→</span>
                   </Link>
                 </div>
-              </div>
-
-              {/* Section 3: Beta Features Summary */}
-              <div className="rounded-[12px] border border-[#eadfce] bg-[#fcfaf6] p-4 text-xs space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-serif font-bold text-sm text-[var(--ink)]">⭐ Customer Review & AI Sentiment Analysis</span>
-                  <span className="rounded-full bg-[var(--terracotta)]/10 px-2 py-0.5 text-[9px] font-bold text-[var(--terracotta)]">Beta Feature</span>
-                </div>
-                <p className="text-[11px] text-[var(--muted)] font-semibold">
-                  Unlocked on order tracking page (<code className="font-mono">/order/[id]</code>) once order status is updated to <span className="font-bold text-[var(--ink)]">Served</span> or <span className="font-bold text-[var(--ink)]">Billed</span>.
-                </p>
               </div>
             </div>
 
