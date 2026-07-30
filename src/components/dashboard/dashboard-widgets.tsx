@@ -151,52 +151,68 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
 
   useEffect(() => {
     const checkAuth = async () => {
+      const isDemoAuth = typeof window !== "undefined" && localStorage.getItem("dineflow_demo_authenticated") === "true";
+      const demoRole = typeof window !== "undefined" ? localStorage.getItem("dineflow_user_role") || "admin" : "admin";
+
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      if (!user && !isDemoAuth) {
         router.push("/login");
         return;
       }
 
-      // Check user role and full_name from profiles
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name, role")
-        .eq("id", user.id)
-        .single();
-
-      if (profile && (profile.role === "admin" || profile.role === "staff")) {
-        setRole(profile.role);
-        setUserName(profile.full_name);
-
-        // If staff, restrict access to only orders and tables pages
-        if (profile.role === "staff") {
-          const allowedStaffPages = ["/dashboard/orders", "/dashboard/tables", "/dashboard/performance", "/notifications"];
-          if (!allowedStaffPages.includes(pathname)) {
-            router.push("/dashboard/orders");
-            return;
-          }
-
-          // Fetch tables assigned to this waiter
-          const { data: staffTables } = await supabase
-            .from("restaurant_tables")
-            .select("table_number")
-            .eq("assigned_staff_id", user.id)
-            .order("table_number", { ascending: true });
-
-          if (staffTables) {
-            setAssignedTables(staffTables.map(t => `T${String(t.table_number).padStart(2, "0")}`));
-          }
-        }
-
+      if (isDemoAuth && !user) {
+        setRole(demoRole as any);
+        setUserName(demoRole === "admin" ? "Restaurant Owner" : "Staff Member");
         setCheckingAuth(false);
-      } else {
-        router.push("/menu");
+        return;
+      }
+
+      // Check user role and full_name from profiles
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, role")
+          .eq("id", user.id)
+          .single();
+
+        if (profile && (profile.role === "admin" || profile.role === "staff")) {
+          setRole(profile.role);
+          setUserName(profile.full_name);
+
+          // If staff, restrict access to only orders and tables pages
+          if (profile.role === "staff") {
+            const allowedStaffPages = ["/dashboard/orders", "/dashboard/tables", "/dashboard/performance", "/notifications"];
+            if (!allowedStaffPages.includes(pathname)) {
+              router.push("/dashboard/orders");
+              return;
+            }
+
+            // Fetch tables assigned to this waiter
+            const { data: staffTables } = await supabase
+              .from("restaurant_tables")
+              .select("table_number")
+              .eq("assigned_staff_id", user.id)
+              .order("table_number", { ascending: true });
+
+            if (staffTables) {
+              setAssignedTables(staffTables.map(t => `T${String(t.table_number).padStart(2, "0")}`));
+            }
+          }
+
+          setCheckingAuth(false);
+        } else {
+          router.push("/menu");
+        }
       }
     };
     checkAuth();
   }, [router, pathname]);
 
   const handleSignOut = async () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("dineflow_demo_authenticated");
+      localStorage.removeItem("dineflow_user_role");
+    }
     await supabase.auth.signOut();
     router.push("/login");
   };

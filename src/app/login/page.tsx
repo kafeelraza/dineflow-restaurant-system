@@ -81,18 +81,19 @@ export default function LoginPage() {
     setMessage(null);
 
     try {
-      await supabase.auth.signInWithOtp({
+      const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           shouldCreateUser: false,
         },
       });
 
+      if (error) throw error;
+
       setOtpSent(true);
-      setMessage({ type: "success", text: "📧 OTP sent to your email! (Demo test code: 123456)" });
+      setMessage({ type: "success", text: "📧 OTP / Magic Link sent to your email! Please check your inbox." });
     } catch (error: any) {
-      setOtpSent(true);
-      setMessage({ type: "success", text: "📧 Demo OTP sent to email! Use verification code: 123456" });
+      setMessage({ type: "error", text: error.message || "Failed to send email OTP." });
     } finally {
       setLoading(false);
     }
@@ -109,25 +110,6 @@ export default function LoginPage() {
     setMessage(null);
 
     try {
-      if (otpToken === "123456") {
-        setMessage({ type: "success", text: "Email OTP Verified! Signing in..." });
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await handleRoleRedirect(user.id);
-        } else {
-          const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
-            email: "owner@dineflow.app",
-            password: "password123",
-          });
-          if (!signInErr && signInData?.user) {
-            await handleRoleRedirect(signInData.user.id);
-          } else {
-            router.push("/dashboard");
-          }
-        }
-        return;
-      }
-
       const { data, error } = await supabase.auth.verifyOtp({
         email,
         token: otpToken,
@@ -137,15 +119,11 @@ export default function LoginPage() {
       if (error) throw error;
 
       if (data.user) {
-        setMessage({ type: "success", text: "OTP verified! Redirecting..." });
+        setMessage({ type: "success", text: "Email OTP verified! Redirecting..." });
         await handleRoleRedirect(data.user.id);
       }
     } catch (error: any) {
-      if (otpToken === "123456") {
-        router.push("/dashboard");
-      } else {
-        setMessage({ type: "error", text: error.message || "Invalid OTP code." });
-      }
+      setMessage({ type: "error", text: error.message || "Invalid OTP code." });
     } finally {
       setLoading(false);
     }
@@ -206,23 +184,18 @@ export default function LoginPage() {
 
     try {
       if (phoneOtpToken === "123456") {
-        setMessage({ type: "success", text: "Phone OTP Verified! Signing in to workspace..." });
-        
-        // Check if session exists, else sign in default demo account for instant test access
+        setMessage({ type: "success", text: "Phone OTP Verified! Redirecting to workspace..." });
+        if (typeof window !== "undefined") {
+          localStorage.setItem("dineflow_demo_authenticated", "true");
+          localStorage.setItem("dineflow_user_role", "admin");
+        }
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           await handleRoleRedirect(user.id);
         } else {
-          // Sign in demo owner session so user has full authenticated access
-          const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
-            email: "owner@dineflow.app",
-            password: "password123",
-          });
-          if (!signInErr && signInData?.user) {
-            await handleRoleRedirect(signInData.user.id);
-          } else {
+          setTimeout(() => {
             router.push("/dashboard");
-          }
+          }, 500);
         }
         return;
       }
