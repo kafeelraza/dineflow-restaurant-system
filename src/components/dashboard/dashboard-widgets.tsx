@@ -240,7 +240,7 @@ export function DashboardShell({ children, title, subtitle }: { children: React.
       )}
 
       <div className="grid min-h-[calc(100vh-24px)] overflow-hidden rounded-[8px] bg-[#fcfaf6] lg:grid-cols-[250px_1fr]">
-        <aside className="hidden border-r border-[#eadfce] bg-[#f5efe5] p-5 lg:flex lg:flex-col lg:justify-between">
+        <aside className="hidden border-r border-[#eadfce] bg-[#f5efe5] p-5 lg:sticky lg:top-3 lg:flex lg:h-[calc(100vh-24px)] lg:flex-col lg:justify-between self-start">
           <div>
             <Link href="/" className="mb-8 flex items-center gap-3">
               <Utensils className="text-[var(--terracotta)]" />
