@@ -14,6 +14,26 @@ interface DbNotification {
   created_at: string;
 }
 
+function formatNotificationTime(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = Math.max(0, now.getTime() - date.getTime());
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMins < 1) return "JUST NOW";
+  if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? "MIN" : "MINS"} AGO`;
+  if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? "HR" : "HRS"} AGO`;
+  if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? "DAY" : "DAYS"} AGO`;
+
+  return date.toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).toUpperCase();
+}
+
 export default function NotificationsPage() {
   const [notificationsList, setNotificationsList] = useState<DbNotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,7 +157,6 @@ export default function NotificationsPage() {
       ) : (
         <div className="space-y-4 max-w-4xl">
           {notificationsList.map((note) => {
-            const diffMinutes = Math.max(1, Math.round((new Date().getTime() - new Date(note.created_at).getTime()) / 60000));
             return (
               <Card key={note.id} className="flex items-start gap-4 bg-white p-5 shadow-sm border border-[#eadfce] transition hover:bg-[#fcfaf6]">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f8eadf] text-[var(--terracotta)]">
@@ -146,7 +165,7 @@ export default function NotificationsPage() {
                 <div>
                   <p className="font-bold text-[var(--ink)] text-sm leading-relaxed">{note.message}</p>
                   <p className="mt-1 text-[10px] text-[var(--muted)] font-extrabold tracking-wider uppercase">
-                    {diffMinutes === 1 ? "Just now" : `${diffMinutes} mins ago`} • DineFlow System Logs
+                    {formatNotificationTime(note.created_at)} • DineFlow System Logs
                   </p>
                 </div>
               </Card>
