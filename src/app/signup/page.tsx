@@ -61,25 +61,10 @@ export default function SignupPage() {
   };
 
   const handleGoogleSignup = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      if (error) {
-        setMessage({
-          type: "error",
-          text: "🔑 Google OAuth is currently in Beta mode (requires GCP credentials). Please use Mobile OTP, Email OTP, or Password signup for instant workspace creation!",
-        });
-      }
-    } catch (error: any) {
-      setMessage({
-        type: "error",
-        text: "🔑 Google OAuth is currently in Beta mode. Please use Mobile OTP, Email OTP, or Password signup for instant workspace creation!",
-      });
-    }
+    setMessage({
+      type: "error",
+      text: "🔑 Google OAuth is currently in Beta mode (requires GCP credentials). Please use Mobile OTP, Email OTP, or Password signup for instant workspace creation!",
+    });
   };
 
   return (
