@@ -9,6 +9,25 @@
 
 ---
 
+## 🏆 Phase 2 Evaluator Testing Roadmap & Workflow Guide
+
+For quick evaluation of all primary workflows and Phase 2 features on the live deployment:
+
+### 🔒 1. Authentication & Security Engine
+- **Primary Auth Engine (Production-Ready):** **Email OTP / Magic Link** & **Password Authentication** using Supabase Auth RLS policies (`/login`).
+- **Beta Feature Badges:**
+  - **Mobile Phone OTP (`Beta`):** Use test code `123456` for instant evaluator login without SMS gateway restrictions.
+  - **Google OAuth (`Beta`):** Displays clean inline Beta guidance if GCP credentials are not enabled.
+
+### ⚡ 2. Live Interactive Demo Shortcuts
+- **🍽️ Dine-In QR Table Menu:** [https://dineflow-restaurant-system.vercel.app/menu?table=2](https://dineflow-restaurant-system.vercel.app/menu?table=2) *(Simulates Table T02 QR Scan)*
+- **🛎️ Kitchen Kanban + Web Audio Chime:** [https://dineflow-restaurant-system.vercel.app/dashboard/orders](https://dineflow-restaurant-system.vercel.app/dashboard/orders) *(Plays Web Audio bell chime on new orders)*
+- **💳 5-Second Payment Confirmation:** [https://dineflow-restaurant-system.vercel.app/billing/demo](https://dineflow-restaurant-system.vercel.app/billing/demo) *(Animated 5s gateway simulation & table release)*
+- **🖨️ Table QR Standee Generator:** [https://dineflow-restaurant-system.vercel.app/dashboard/tables](https://dineflow-restaurant-system.vercel.app/dashboard/tables) *(Generates printable table QR standee posters)*
+- **⏱️ Glowing Live Order Stepper & AI Review (`Beta`):** [https://dineflow-restaurant-system.vercel.app/order/demo](https://dineflow-restaurant-system.vercel.app/order/demo) *(Unlocked when order status is Served/Billed)*
+
+---
+
 ## 🌟 Executive Summary
 
 **DineFlow** is an enterprise-grade, real-time web operating system designed to transform modern restaurant operations. It unifies dining room table reservations, kitchen Kanban workflows, waiter order claiming, inventory management, and executive analytics into a seamless, role-isolated platform powered by **Google Gemini 2.0 Flash AI**.

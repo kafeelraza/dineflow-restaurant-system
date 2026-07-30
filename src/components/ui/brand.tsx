@@ -49,6 +49,7 @@ export function PageHeader({ eyebrow, title, copy }: { eyebrow: string; title: s
 
 export function AppNav() {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [showGuideModal, setShowGuideModal] = useState(false);
 
   return (
     <>
@@ -62,20 +63,145 @@ export function AppNav() {
             <Link href="/dashboard" className="hover:text-[var(--ink)] transition">Dashboard</Link>
           </div>
           <div className="hidden items-center gap-3 md:flex">
+            <button
+              onClick={() => setShowGuideModal(true)}
+              className="flex h-11 items-center gap-2 rounded-full border border-[var(--terracotta)] bg-[#f8eadf] px-4 text-xs font-bold text-[var(--terracotta)] transition hover:scale-[1.03] shadow-sm animate-pulse"
+            >
+              🏆 Evaluator Guide
+            </button>
             <ButtonLink href="/login" variant="ghost">Login</ButtonLink>
             <ButtonLink href="/menu">Order now</ButtonLink>
           </div>
 
           {/* Mobile Hamburger Button */}
-          <button
-            onClick={() => setMobileDrawerOpen(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d7c9b5] bg-white text-[var(--ink)] md:hidden transition active:scale-95 shadow-sm"
-            aria-label="Open mobile navigation menu"
-          >
-            <Menu size={20} />
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <button
+              onClick={() => setShowGuideModal(true)}
+              className="flex h-10 items-center gap-1.5 rounded-full bg-[var(--terracotta)] px-3 text-[11px] font-bold text-white shadow-sm"
+            >
+              🏆 Guide
+            </button>
+            <button
+              onClick={() => setMobileDrawerOpen(true)}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d7c9b5] bg-white text-[var(--ink)] transition active:scale-95 shadow-sm"
+              aria-label="Open mobile navigation menu"
+            >
+              <Menu size={20} />
+            </button>
+          </div>
         </div>
       </nav>
+
+      {/* Evaluator Demo Guide Interactive Modal */}
+      {showGuideModal && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[20px] border border-[#eadfce] bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setShowGuideModal(false)}
+              className="absolute top-5 right-5 flex h-8 w-8 items-center justify-center rounded-full bg-[#fcfaf6] border border-[#eadfce] text-[var(--muted)] hover:text-[var(--ink)] font-bold transition"
+            >
+              ✕
+            </button>
+
+            <div className="pr-8">
+              <span className="rounded-full bg-[var(--terracotta)]/10 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-[var(--terracotta)]">
+                Vibeathon 6.0 Phase 2 • Evaluator Tour
+              </span>
+              <h2 className="mt-2 font-serif text-3xl font-bold text-[var(--ink)]">
+                DineFlow Workflow & Testing Roadmap
+              </h2>
+              <p className="mt-1 text-xs text-[var(--muted)] font-semibold leading-relaxed">
+                Welcome Judges! Use this quick guide to test all primary production workflows and beta feature enhancements in 1 click.
+              </p>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              {/* Section 1: Authentication Engine */}
+              <div className="rounded-[12px] border border-[#eadfce] bg-[#fcfaf6] p-4 space-y-2">
+                <h3 className="font-serif font-bold text-sm text-[var(--ink)] flex items-center gap-2">
+                  🔒 Authentication & Security Workflows
+                </h3>
+                <div className="grid gap-2 text-xs">
+                  <div className="p-2.5 rounded-[8px] bg-white border border-[#eadfce]">
+                    <span className="font-bold text-[var(--ink)]">1. Email OTP & Password Auth (Primary):</span>
+                    <p className="text-[11px] text-[var(--muted)] font-semibold mt-0.5">
+                      Sends real 6-digit verification tokens / magic links to real email inboxes via Supabase Auth server.
+                    </p>
+                  </div>
+                  <div className="p-2.5 rounded-[8px] bg-white border border-[#eadfce]">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-[var(--ink)]">2. Mobile Phone OTP Auth:</span>
+                      <span className="rounded-full bg-[var(--terracotta)]/10 px-2 py-0.5 text-[9px] font-bold text-[var(--terracotta)]">Beta Feature</span>
+                    </div>
+                    <p className="text-[11px] text-[var(--muted)] font-semibold mt-0.5">
+                      Test code <code className="font-mono font-bold text-[var(--terracotta)]">123456</code> allows instant evaluator mobile login without SMS gateway restrictions.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Quick Test Shortcuts */}
+              <div className="rounded-[12px] border border-[#eadfce] bg-white p-4 space-y-2">
+                <h3 className="font-serif font-bold text-sm text-[var(--ink)]">
+                  ⚡ 1-Click Interactive Demo Shortcuts
+                </h3>
+                <div className="grid gap-2.5 sm:grid-cols-2 text-xs">
+                  <Link
+                    href="/menu?table=2"
+                    onClick={() => setShowGuideModal(false)}
+                    className="flex items-center justify-between p-3 rounded-[8px] bg-[#fcfaf6] border border-[#eadfce] font-bold text-[var(--ink)] hover:border-[var(--terracotta)] transition"
+                  >
+                    <span>🍽️ Test Table T02 QR Menu</span>
+                    <span className="text-[var(--terracotta)]">→</span>
+                  </Link>
+                  <Link
+                    href="/dashboard/orders"
+                    onClick={() => setShowGuideModal(false)}
+                    className="flex items-center justify-between p-3 rounded-[8px] bg-[#fcfaf6] border border-[#eadfce] font-bold text-[var(--ink)] hover:border-[var(--terracotta)] transition"
+                  >
+                    <span>🛎️ Kitchen Kanban + Chime</span>
+                    <span className="text-[var(--terracotta)]">→</span>
+                  </Link>
+                  <Link
+                    href="/billing/demo"
+                    onClick={() => setShowGuideModal(false)}
+                    className="flex items-center justify-between p-3 rounded-[8px] bg-[#fcfaf6] border border-[#eadfce] font-bold text-[var(--ink)] hover:border-[var(--terracotta)] transition"
+                  >
+                    <span>💳 Test 5s Payment Gateway</span>
+                    <span className="text-[var(--terracotta)]">→</span>
+                  </Link>
+                  <Link
+                    href="/dashboard/tables"
+                    onClick={() => setShowGuideModal(false)}
+                    className="flex items-center justify-between p-3 rounded-[8px] bg-[#fcfaf6] border border-[#eadfce] font-bold text-[var(--ink)] hover:border-[var(--terracotta)] transition"
+                  >
+                    <span>🖨️ Table QR Standee Generator</span>
+                    <span className="text-[var(--terracotta)]">→</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Section 3: Beta Features Summary */}
+              <div className="rounded-[12px] border border-[#eadfce] bg-[#fcfaf6] p-4 text-xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-serif font-bold text-sm text-[var(--ink)]">⭐ Customer Review & AI Sentiment Analysis</span>
+                  <span className="rounded-full bg-[var(--terracotta)]/10 px-2 py-0.5 text-[9px] font-bold text-[var(--terracotta)]">Beta Feature</span>
+                </div>
+                <p className="text-[11px] text-[var(--muted)] font-semibold">
+                  Unlocked on order tracking page (<code className="font-mono">/order/[id]</code>) once order status is updated to <span className="font-bold text-[var(--ink)]">Served</span> or <span className="font-bold text-[var(--ink)]">Billed</span>.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowGuideModal(false)}
+              className="mt-6 h-11 w-full rounded-full bg-[var(--terracotta)] font-bold text-white text-xs transition hover:scale-[1.01]"
+            >
+              Close & Continue Exploring
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Slide-Over Drawer */}
       {mobileDrawerOpen && (
