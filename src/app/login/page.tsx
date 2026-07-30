@@ -252,17 +252,17 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
-              onClick={() => { setAuthMode("phone_otp"); setOtpSent(false); setPhoneOtpSent(false); }}
-              className={`rounded-full py-2 transition ${authMode === "phone_otp" ? "bg-[var(--terracotta)] text-white shadow-sm" : "text-[var(--muted)]"}`}
-            >
-              📱 Mobile OTP
-            </button>
-            <button
-              type="button"
               onClick={() => { setAuthMode("email_otp"); setOtpSent(false); setPhoneOtpSent(false); }}
               className={`rounded-full py-2 transition ${authMode === "email_otp" ? "bg-[var(--terracotta)] text-white shadow-sm" : "text-[var(--muted)]"}`}
             >
               Email OTP
+            </button>
+            <button
+              type="button"
+              onClick={() => { setAuthMode("phone_otp"); setOtpSent(false); setPhoneOtpSent(false); }}
+              className={`rounded-full py-2 transition ${authMode === "phone_otp" ? "bg-[var(--terracotta)] text-white shadow-sm" : "text-[var(--muted)]"}`}
+            >
+              📱 Mobile OTP
             </button>
           </div>
 
