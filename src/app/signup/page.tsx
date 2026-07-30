@@ -15,6 +15,8 @@ export default function SignupPage() {
   const [role, setRole] = useState("admin");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  const [phone, setPhone] = useState("");
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password || !restaurantName) {
@@ -30,10 +32,12 @@ export default function SignupPage() {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        phone: phone ? (phone.startsWith("+") ? phone : `+91${phone}`) : undefined,
         options: {
           data: {
             full_name: restaurantName,
             role: role,
+            phone: phone || null,
           },
         },
       });
@@ -99,6 +103,16 @@ export default function SignupPage() {
                 className="mt-2 h-12 w-full rounded-[8px] border border-[#d7c9b5] bg-[#fcfaf6] px-4 outline-none focus:border-[var(--terracotta)]"
                 placeholder="Haven Table"
                 required
+              />
+            </label>
+            <label>
+              <span className="text-sm font-bold">Mobile phone number (for OTP login)</span>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="mt-2 h-12 w-full rounded-[8px] border border-[#d7c9b5] bg-[#fcfaf6] px-4 outline-none focus:border-[var(--terracotta)]"
+                placeholder="+91 98765 43210"
               />
             </label>
             <label>

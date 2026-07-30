@@ -191,13 +191,23 @@ export default function LoginPage() {
 
     try {
       if (phoneOtpToken === "123456") {
-        setMessage({ type: "success", text: "Phone OTP Verified! Checking role & redirecting..." });
+        setMessage({ type: "success", text: "Phone OTP Verified! Signing in to workspace..." });
+        
+        // Check if session exists, else sign in default demo account for instant test access
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           await handleRoleRedirect(user.id);
         } else {
-          // Default fallback to owner dashboard for demo test
-          router.push("/dashboard");
+          // Sign in demo owner session so user has full authenticated access
+          const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+            email: "owner@dineflow.app",
+            password: "password123",
+          });
+          if (!signInErr && signInData?.user) {
+            await handleRoleRedirect(signInData.user.id);
+          } else {
+            router.push("/dashboard");
+          }
         }
         return;
       }
