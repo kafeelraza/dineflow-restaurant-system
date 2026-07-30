@@ -68,9 +68,17 @@ export default function SignupPage() {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
-      if (error) throw error;
+      if (error) {
+        setMessage({
+          type: "error",
+          text: "🔑 Google OAuth is currently in Beta mode (requires GCP credentials). Please use Mobile OTP, Email OTP, or Password signup for instant workspace creation!",
+        });
+      }
     } catch (error: any) {
-      setMessage({ type: "error", text: error.message || "Failed to start Google signup." });
+      setMessage({
+        type: "error",
+        text: "🔑 Google OAuth is currently in Beta mode. Please use Mobile OTP, Email OTP, or Password signup for instant workspace creation!",
+      });
     }
   };
 
@@ -168,7 +176,7 @@ export default function SignupPage() {
               onClick={handleGoogleSignup}
               className="flex h-12 items-center justify-center gap-2 rounded-full border border-[#d7c9b5] bg-white font-bold transition hover:scale-[1.02]"
             >
-              <BadgeCheck size={18} /> Sign up with Google
+              <BadgeCheck size={18} /> Sign up with Google <span className="rounded-full bg-[var(--terracotta)]/10 px-2 py-0.5 text-[10px] font-bold text-[var(--terracotta)]">Beta</span>
             </button>
           </form>
         </Card>

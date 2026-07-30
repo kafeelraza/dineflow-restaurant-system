@@ -137,9 +137,17 @@ export default function LoginPage() {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
-      if (error) throw error;
+      if (error) {
+        setMessage({
+          type: "error",
+          text: "🔑 Google OAuth is currently in Beta mode (requires GCP credentials). Please use Mobile OTP, Email OTP, or Password login for instant access!",
+        });
+      }
     } catch (error: any) {
-      setMessage({ type: "error", text: error.message || "Failed to start Google login." });
+      setMessage({
+        type: "error",
+        text: "🔑 Google OAuth is currently in Beta mode. Please use Mobile OTP, Email OTP, or Password login for instant access!",
+      });
     }
   };
 
@@ -420,7 +428,7 @@ export default function LoginPage() {
               onClick={handleGoogleLogin}
               className="flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#d7c9b5] bg-white font-bold text-[var(--ink)] transition hover:scale-[1.02]"
             >
-              <ShieldCheck size={18} /> Continue with Google
+              <ShieldCheck size={18} /> Continue with Google <span className="rounded-full bg-[var(--terracotta)]/10 px-2 py-0.5 text-[10px] font-bold text-[var(--terracotta)]">Beta</span>
             </button>
           </div>
 
