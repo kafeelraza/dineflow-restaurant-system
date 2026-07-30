@@ -191,8 +191,14 @@ export default function LoginPage() {
 
     try {
       if (phoneOtpToken === "123456") {
-        setMessage({ type: "success", text: "Phone OTP Verified! Logging in..." });
-        setTimeout(() => router.push("/menu"), 1000);
+        setMessage({ type: "success", text: "Phone OTP Verified! Checking role & redirecting..." });
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await handleRoleRedirect(user.id);
+        } else {
+          // Default fallback to owner dashboard for demo test
+          router.push("/dashboard");
+        }
         return;
       }
 
